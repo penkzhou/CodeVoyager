@@ -7,106 +7,110 @@
   <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="License">
 </p>
 
-**CodeVoyager** 是一款原生 macOS 代码阅读与 Git 可视化应用，旨在以 Swift 原生方式替代基于 Electron 的解决方案，实现高性能、低内存占用的代码浏览体验。
+<p align="center">
+  <a href="./README_cn.md">中文文档</a>
+</p>
 
-> 🚧 **项目状态**: 早期开发阶段
+**CodeVoyager** is a native macOS application for code reading and Git visualization. Built with Swift to replace Electron-based solutions, it delivers high performance and low memory footprint for an exceptional code browsing experience.
 
-## ✨ 特性
+> 🚧 **Status**: Early development stage
 
-- 🚀 **原生性能** - 纯 Swift + SwiftUI 构建，内存占用 < 200MB
-- 📂 **文件树浏览** - 支持懒加载的仓库文件浏览器
-- 📝 **代码阅读** - 基于 Tree-sitter 的语法高亮，支持万行级大文件
-- 🔀 **Git 集成** - 查看提交历史、分支、差异对比
-- 🎨 **现代 UI** - 遵循 macOS 设计规范的三栏布局
+## ✨ Features
 
-## 📸 截图
+- 🚀 **Native Performance** - Pure Swift + SwiftUI, memory usage < 200MB
+- 📂 **File Tree Browser** - Repository file browser with lazy loading
+- 📝 **Code Reading** - Tree-sitter based syntax highlighting, supports 10K+ line files
+- 🔀 **Git Integration** - View commit history, branches, and diffs
+- 🎨 **Modern UI** - Three-column layout following macOS design guidelines
 
-> 即将推出
+## 📸 Screenshots
 
-## 🔧 系统要求
+> Coming soon
 
-- **macOS 14.0** (Sonoma) 或更高版本
-- Xcode 15+ (用于开发)
+## 🔧 Requirements
+
+- **macOS 14.0** (Sonoma) or later
+- Xcode 15+ (for development)
 - Swift 5.9+
 
-## 🚀 快速开始
+## 🚀 Getting Started
 
-### 构建运行
+### Build & Run
 
 ```bash
-# 克隆仓库
-git clone https://github.com/yourusername/CodeVoyager.git
+# Clone the repository
+git clone https://github.com/penkzhou/CodeVoyager.git
 cd CodeVoyager
 
-# 构建项目
+# Build the project
 swift build
 
-# 运行应用
+# Run the app
 swift run
 
-# 或使用脚本一键编译打包运行
+# Or use the script to compile, package and run
 ./Scripts/compile_and_run.sh
 ```
 
-### 构建 .app 包
+### Build .app Bundle
 
 ```bash
-# 构建 release 版本并打包
+# Build release version and package
 ./Scripts/package_app.sh release
 
-# 应用将生成在项目根目录: CodeVoyager.app
+# The app will be generated at project root: CodeVoyager.app
 ```
 
-### 运行测试
+### Run Tests
 
 ```bash
 swift test
-# 或
+# Or
 ./Scripts/compile_and_run.sh --test
 ```
 
-## 🏗️ 项目架构
+## 🏗️ Architecture
 
-项目采用分层架构设计，遵循清晰的职责划分：
+The project follows a layered architecture with clear separation of concerns:
 
 ```
 Sources/CodeVoyager/
-├── App/                    # 应用入口与主窗口
+├── App/                    # App entry and main window
 │   ├── CodeVoyagerApp.swift
 │   ├── AppState.swift
 │   └── MainWindowView.swift
-├── Core/                   # 通用组件与工具
-│   ├── Components/         # 可复用 UI 组件
-│   └── Utilities/          # 工具类
-├── Domain/                 # 领域层
-│   └── Entities/           # 核心实体 (Repository, Commit, Branch...)
-├── Features/               # 功能模块
-│   ├── Repository/         # 仓库管理
-│   ├── FileTree/           # 文件树浏览
-│   ├── CodeEditor/         # 代码编辑器 (只读)
-│   ├── GitHistory/         # 提交历史 (v0.2)
-│   ├── GitDiff/            # 差异对比 (v0.2)
-│   ├── GitBlame/           # Blame 注解 (v0.2)
-│   └── BranchGraph/        # 分支图 (v0.2)
-├── Services/               # 服务层
-│   ├── FileSystem/         # 文件系统服务
-│   └── Git/                # Git 操作服务
-└── Infrastructure/         # 基础设施
-    ├── Database/           # GRDB 缓存
-    └── Syntax/             # 语法高亮引擎
+├── Core/                   # Shared components and utilities
+│   ├── Components/         # Reusable UI components
+│   └── Utilities/          # Utility classes
+├── Domain/                 # Domain layer
+│   └── Entities/           # Core entities (Repository, Commit, Branch...)
+├── Features/               # Feature modules
+│   ├── Repository/         # Repository management
+│   ├── FileTree/           # File tree browser
+│   ├── CodeEditor/         # Code editor (read-only)
+│   ├── GitHistory/         # Commit history (v0.2)
+│   ├── GitDiff/            # Diff view (v0.2)
+│   ├── GitBlame/           # Blame annotations (v0.2)
+│   └── BranchGraph/        # Branch graph (v0.2)
+├── Services/               # Service layer
+│   ├── FileSystem/         # File system service
+│   └── Git/                # Git operations service
+└── Infrastructure/         # Infrastructure
+    ├── Database/           # GRDB caching
+    └── Syntax/             # Syntax highlighting engine
 ```
 
-### 技术栈
+### Tech Stack
 
-| 组件 | 技术选型 | 说明 |
-|------|---------|------|
-| UI 框架 | SwiftUI + AppKit | SwiftUI 为主，AppKit 用于高性能文本渲染 |
-| 文本视图 | STTextView | 基于 TextKit 2 的高性能文本组件 |
-| 语法高亮 | Neon + Tree-sitter | 增量解析，支持大文件 |
-| Git 操作 | 混合方案 | SwiftGit3 + git CLI |
-| 数据缓存 | GRDB.swift | SQLite 封装，用于元数据缓存 |
+| Component | Technology | Description |
+|-----------|------------|-------------|
+| UI Framework | SwiftUI + AppKit | SwiftUI primary, AppKit for high-performance text rendering |
+| Text View | STTextView | High-performance text component based on TextKit 2 |
+| Syntax Highlighting | Neon + Tree-sitter | Incremental parsing, supports large files |
+| Git Operations | Hybrid approach | SwiftGit3 + git CLI |
+| Data Caching | GRDB.swift | SQLite wrapper for metadata caching |
 
-## 📦 依赖项
+## 📦 Dependencies
 
 ```swift
 dependencies: [
@@ -117,53 +121,53 @@ dependencies: [
 ]
 ```
 
-## 📋 性能目标
+## 📋 Performance Targets
 
-| 指标 | 目标 |
-|------|------|
-| 内存占用 | < 200MB (常规使用) |
-| 冷启动时间 | < 2 秒 |
-| 大文件支持 | 10,000+ 行流畅滚动 |
-| 提交历史加载 | 虚拟化列表，按需加载 |
+| Metric | Target |
+|--------|--------|
+| Memory Usage | < 200MB (normal usage) |
+| Cold Start Time | < 2 seconds |
+| Large File Support | 10,000+ lines with smooth scrolling |
+| Commit History Loading | Virtualized list, load on demand |
 
-## 🗺️ 路线图
+## 🗺️ Roadmap
 
-### v0.1.0 (当前)
-- [x] 项目基础架构
-- [x] 仓库打开与管理
-- [x] 文件树浏览
-- [x] 基础代码查看器
-- [ ] 语法高亮集成
+### v0.1.0 (Current)
+- [x] Project foundation
+- [x] Repository opening and management
+- [x] File tree browser
+- [x] Basic code viewer
+- [ ] Syntax highlighting integration
 
 ### v0.2.0
-- [ ] Git 提交历史
-- [ ] Diff 差异视图
+- [ ] Git commit history
+- [ ] Diff view
 - [ ] Git Blame
-- [ ] 分支图可视化
+- [ ] Branch graph visualization
 
 ### v0.3.0
-- [ ] 搜索功能
-- [ ] 书签与导航
-- [ ] 多仓库支持
-- [ ] 偏好设置
+- [ ] Search functionality
+- [ ] Bookmarks and navigation
+- [ ] Multi-repository support
+- [ ] Preferences
 
-## 🤝 贡献
+## 🤝 Contributing
 
-欢迎贡献代码！请先阅读项目的 [CLAUDE.md](./CLAUDE.md) 了解开发规范。
+Contributions are welcome! Please read [CLAUDE.md](./CLAUDE.md) for development guidelines.
 
-1. Fork 本仓库
-2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'Add amazing feature'`)
-4. 推送分支 (`git push origin feature/amazing-feature`)
-5. 发起 Pull Request
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 许可证
+## 📄 License
 
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 致谢
+## 🙏 Acknowledgments
 
-- [Fork](https://git-fork.com/) - 设计灵感来源
-- [STTextView](https://github.com/krzyzanowskim/STTextView) - 高性能文本组件
-- [Neon](https://github.com/ChimeHQ/Neon) - Tree-sitter 语法高亮引擎
-- [GRDB.swift](https://github.com/groue/GRDB.swift) - Swift SQLite 工具包
+- [Fork](https://git-fork.com/) - Design inspiration
+- [STTextView](https://github.com/krzyzanowskim/STTextView) - High-performance text component
+- [Neon](https://github.com/ChimeHQ/Neon) - Tree-sitter syntax highlighting engine
+- [GRDB.swift](https://github.com/groue/GRDB.swift) - Swift SQLite toolkit
