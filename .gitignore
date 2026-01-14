@@ -37,3 +37,10 @@ fastlane/test_output
 
 # Code Injection
 iOSInjectionProject/
+
+# Editor
+.vscode/
+.idea/
+
+# Build artifacts
+*.app/
