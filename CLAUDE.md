@@ -69,3 +69,28 @@ Each feature lives in `CodeVoyager/Features/`:
 - Memory: < 200MB for normal usage
 - Cold start: < 2 seconds
 - Large files: 10000+ lines must scroll smoothly
+
+## Coding Guidelines
+
+详细最佳实践参见 `docs/best-practices/` 目录。
+
+### Error Handling
+- **禁止使用 `try?` 静默吞掉错误** - 至少使用 `logger.error()` 记录错误信息
+- 错误消息应包含用户可操作的指引，例如："请选择包含 .git 文件夹的目录"
+
+### SwiftUI/AppKit 集成
+- 使用 AppKit UI 组件（如 NSOpenPanel）的类必须标记 `@MainActor`
+- 避免与 SwiftUI 内置类型重名（如 TabView、Text、Button 等）
+
+### Hashable 实现
+- 当 struct 包含可变属性时，自定义 `hash(into:)` 和 `==`，只包含不可变属性
+- 在注释中说明为何某些属性不参与 hash 计算
+
+### View 与 ViewModel 一致性
+- 当 View 和 ViewModel 有相似逻辑（如 closeTab），必须保持行为一致
+- 优先让 View 调用 ViewModel 方法，而非重复实现逻辑
+
+### 测试覆盖
+- 所有 enum case 必须有测试覆盖
+- 所有 async 方法必须有测试覆盖
+- 测试用例应覆盖正常路径和错误路径
