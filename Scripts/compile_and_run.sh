@@ -3,6 +3,12 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Load version.env first to pick up APP_NAME
+if [[ -f "$ROOT_DIR/version.env" ]]; then
+  source "$ROOT_DIR/version.env"
+fi
+
 APP_NAME=${APP_NAME:-MyApp}
 APP_BUNDLE="${ROOT_DIR}/${APP_NAME}.app"
 APP_PROCESS_PATTERN="${APP_NAME}.app/Contents/MacOS/${APP_NAME}"

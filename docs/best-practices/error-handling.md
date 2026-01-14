@@ -8,7 +8,7 @@
 
 ## 反模式：静默吞掉错误
 
-### ❌ 不推荐
+### ❌ 不推荐：使用 try? 静默吞错
 
 ```swift
 private func loadData() {
@@ -20,10 +20,24 @@ private func loadData() {
 }
 ```
 
+### ❌ 不推荐：空 catch 块
+
+```swift
+func isGitIgnored(_ path: String) -> Bool {
+    do {
+        try process.run()
+        return process.terminationStatus == 0
+    } catch {
+        return false  // 错误被吞掉，没有任何记录！
+    }
+}
+```
+
 **问题**：
 - 无法知道是因为数据不存在还是解码失败
 - 生产环境出问题时难以排查
 - 用户看到空数据但不知道原因
+- 降级行为没有文档说明
 
 ### ✅ 推荐
 
@@ -42,6 +56,27 @@ private func loadData() {
         logger.error("Failed to decode data: \(error.localizedDescription)")
         // 清理损坏数据，防止重复失败
         UserDefaults.standard.removeObject(forKey: "key")
+    }
+}
+```
+
+### ✅ 推荐：降级处理时记录日志
+
+```swift
+func isGitIgnored(_ path: String, in repository: URL) async throws -> Bool {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+    process.arguments = ["-C", repository.path, "check-ignore", "-q", path]
+    
+    do {
+        try process.run()
+        process.waitUntilExit()
+        return process.terminationStatus == 0
+    } catch {
+        // 记录日志，说明降级行为
+        logger.warning("Failed to check git ignore status for '\(path)': \(error.localizedDescription)")
+        // Return false as fallback - file will be treated as not ignored
+        return false
     }
 }
 ```

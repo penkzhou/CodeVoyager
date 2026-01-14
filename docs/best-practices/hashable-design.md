@@ -97,6 +97,39 @@ struct TabItem: Identifiable, Hashable {
 }
 ```
 
+## 实际案例：FileNode
+
+项目中的 `FileNode` 是一个典型例子：
+
+```swift
+/// 文件树节点。
+/// Note: Hashable 只包含不可变属性 (id, url)，
+/// 可变状态 (children, isGitIgnored, isLoaded) 不参与 hash 计算。
+/// 注意：展开状态 (isExpanded) 由 FileTreeViewModel 的 expandedIDs 管理，不在节点本身。
+struct FileNode: Identifiable, Hashable {
+    let id: UUID
+    let url: URL
+    
+    /// 子节点 - 不参与 hash
+    var children: [FileNode]?
+    
+    /// 是否被 gitignore - 不参与 hash
+    var isGitIgnored: Bool = false
+    
+    /// 是否已加载 - 不参与 hash
+    var isLoaded: Bool = false
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(url)
+    }
+    
+    static func == (lhs: FileNode, rhs: FileNode) -> Bool {
+        lhs.id == rhs.id && lhs.url == rhs.url
+    }
+}
+```
+
 ## 检查清单
 
 在为 struct 添加 `Hashable` 时，检查：
@@ -104,5 +137,6 @@ struct TabItem: Identifiable, Hashable {
 - [ ] 是否有 `var` 属性？
 - [ ] 这些 `var` 属性在生命周期中会改变吗？
 - [ ] 该类型会被用作 `Set` 元素或 `Dictionary` 键吗？
+- [ ] 该类型会被用于 SwiftUI 的 `ForEach` 或 `List` 吗？
 
-如果以上都是"是"，请自定义 `hash(into:)` 和 `==` 实现。
+如果以上任一为"是"，请自定义 `hash(into:)` 和 `==` 实现。

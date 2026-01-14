@@ -29,10 +29,13 @@ protocol FileSystemServiceProtocol {
     // MARK: - Git Ignore
 
     /// Get list of gitignored paths in a repository.
-    func gitIgnoredPaths(in repository: URL) async throws -> Set<String>
+    /// - Note: Returns empty set if parsing fails (logged as warning).
+    ///         This is intentional to not block file tree loading on gitignore errors.
+    func gitIgnoredPaths(in repository: URL) async -> Set<String>
 
     /// Check if a specific path is gitignored.
-    func isGitIgnored(_ path: String, in repository: URL) async throws -> Bool
+    /// - Note: Returns false if check fails (logged as warning).
+    func isGitIgnored(_ path: String, in repository: URL) async -> Bool
 
     // MARK: - File Watching
 

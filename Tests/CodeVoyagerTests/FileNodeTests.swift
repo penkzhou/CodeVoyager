@@ -44,48 +44,46 @@ struct FileNodeTests {
     func iconNames() {
         // Swift files
         let swiftFile = FileNode(url: URL(fileURLWithPath: "/test/App.swift"))
-        #expect(swiftFile.iconName == "swift")
+        #expect(swiftFile.iconName() == "swift")
 
         // JavaScript/TypeScript
         let jsFile = FileNode(url: URL(fileURLWithPath: "/test/app.js"))
-        #expect(jsFile.iconName == "curlybraces")
+        #expect(jsFile.iconName() == "curlybraces")
 
         let tsxFile = FileNode(url: URL(fileURLWithPath: "/test/Component.tsx"))
-        #expect(tsxFile.iconName == "curlybraces")
+        #expect(tsxFile.iconName() == "curlybraces")
 
         // Images
         let pngFile = FileNode(url: URL(fileURLWithPath: "/test/image.png"))
-        #expect(pngFile.iconName == "photo")
+        #expect(pngFile.iconName() == "photo")
 
         // Markdown
         let mdFile = FileNode(url: URL(fileURLWithPath: "/test/README.md"))
-        #expect(mdFile.iconName == "doc.richtext")
+        #expect(mdFile.iconName() == "doc.richtext")
 
         // Shell scripts
         let shFile = FileNode(url: URL(fileURLWithPath: "/test/build.sh"))
-        #expect(shFile.iconName == "terminal")
+        #expect(shFile.iconName() == "terminal")
 
         // Git files
         let gitignore = FileNode(url: URL(fileURLWithPath: "/test/.gitignore"))
-        #expect(gitignore.iconName == "arrow.triangle.branch")
+        #expect(gitignore.iconName() == "arrow.triangle.branch")
 
         // Unknown type defaults to doc
         let unknownFile = FileNode(url: URL(fileURLWithPath: "/test/file.xyz"))
-        #expect(unknownFile.iconName == "doc")
+        #expect(unknownFile.iconName() == "doc")
     }
 
-    @Test("FileNode directory icon changes based on expanded state")
+    @Test("FileNode directory icon changes based on expanded state parameter")
     func directoryIconState() {
-        var directory = FileNode(
+        let directory = FileNode(
             url: URL(fileURLWithPath: "/test/folder"),
             children: []
         )
 
-        directory.isExpanded = false
-        #expect(directory.iconName == "folder")
-
-        directory.isExpanded = true
-        #expect(directory.iconName == "folder.fill")
+        // isExpanded is managed by ViewModel, passed as parameter
+        #expect(directory.iconName(isExpanded: false) == "folder")
+        #expect(directory.iconName(isExpanded: true) == "folder.fill")
     }
 }
 
@@ -126,6 +124,50 @@ struct FileContentTests {
             content: "Line 1\nLine 2\n"
         )
         // "Line 1\nLine 2\n" should be 2 lines (trailing newline doesn't add a line)
+        #expect(content.lineCount == 2)
+    }
+    
+    // 问题 7 修复: 添加更多边界情况测试
+    // Note: components(separatedBy: .newlines) treats both \r and \n as newline characters separately
+    
+    @Test("FileContent calculates line count for only newline character")
+    func lineCountOnlyNewline() {
+        let content = FileContent(
+            path: "/test/newline.txt",
+            content: "\n"
+        )
+        // "\n" splits into ["", ""], trailing empty component removed = 1 line
+        #expect(content.lineCount == 1)
+    }
+    
+    @Test("FileContent calculates line count for multiple newlines")
+    func lineCountMultipleNewlines() {
+        let content = FileContent(
+            path: "/test/empty-lines.txt",
+            content: "\n\n\n"
+        )
+        // "\n\n\n" splits into ["", "", "", ""], trailing removed = 3 lines
+        #expect(content.lineCount == 3)
+    }
+    
+    @Test("FileContent calculates line count with only LF line endings")
+    func lineCountLFOnly() {
+        let content = FileContent(
+            path: "/test/lf.txt",
+            content: "Line 1\nLine 2\nLine 3"
+        )
+        #expect(content.lineCount == 3)
+    }
+    
+    @Test("FileContent calculates line count for content with embedded CR")
+    func lineCountWithCR() {
+        // Note: .newlines treats \r as a separate newline character
+        // This is a known limitation - CRLF files may report different line counts
+        let content = FileContent(
+            path: "/test/cr.txt",
+            content: "Line 1\rLine 2"
+        )
+        // "\r" is treated as newline by .newlines
         #expect(content.lineCount == 2)
     }
 

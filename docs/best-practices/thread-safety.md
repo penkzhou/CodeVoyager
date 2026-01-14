@@ -161,8 +161,41 @@ struct ContentView: View {
 }
 ```
 
+## 测试代码适配
+
+当 ViewModel 标记 `@MainActor` 后，测试代码也需要相应调整：
+
+### Swift Testing 框架
+
+```swift
+@Suite("RepositoryViewModel Tests")
+@MainActor  // 整个 Suite 在 MainActor 上运行
+struct RepositoryViewModelTests {
+    @Test("Opening a file creates a new tab")
+    func openFileCreatesTab() async {
+        let viewModel = RepositoryViewModel(repository: repo)
+        await viewModel.openFile(fileNode)
+        #expect(viewModel.tabs.count == 1)
+    }
+}
+```
+
+### XCTest 框架
+
+```swift
+@MainActor
+final class RepositoryViewModelTests: XCTestCase {
+    func testOpenFileCreatesTab() async {
+        let viewModel = RepositoryViewModel(repository: repo)
+        await viewModel.openFile(fileNode)
+        XCTAssertEqual(viewModel.tabs.count, 1)
+    }
+}
+```
+
 ## 检查清单
 
 - [ ] 使用 AppKit UI 组件的类是否标记了 `@MainActor`？
 - [ ] 异步方法中更新 `@Published`/`@Observable` 属性是否在主线程？
 - [ ] 是否避免在后台线程调用 UI 相关方法？
+- [ ] `@MainActor` 类的测试 Suite 是否也标记了 `@MainActor`？
