@@ -1,11 +1,28 @@
 import Foundation
 
 /// Represents a node in the file tree (file or directory).
+/// Note: Hashable is implemented manually to only include immutable properties (id, url),
+/// preventing issues when mutable state (children, isGitIgnored, isLoaded) changes.
+/// Note: Expansion state is managed by FileTreeViewModel.expandedIDs, not by the node itself.
+///
+/// ## Design Note on `children` Property
+/// The `children` property is `var` to support lazy loading: directories start with
+/// `children = []` (empty array) and are populated when expanded. While this theoretically
+/// allows changing a file (nil) to a directory (non-nil), this is prevented by:
+/// 1. The initializer sets `children` based on file system type at creation
+/// 2. Only `updateNodeRecursively` in ViewModel modifies children, and only for existing directories
+///
+/// Future improvement: Consider using a separate `let isDirectory: Bool` property or an enum
+/// to make the file/directory distinction immutable at the type level.
 struct FileNode: Identifiable, Hashable {
     let id: UUID
     let url: URL
 
-    /// Children nodes (nil for files, empty array for empty directories)
+    /// Children nodes (nil for files, empty array for empty/unloaded directories)
+    /// - `nil`: This is a file
+    /// - `[]` (empty array): This is a directory (may be empty or not yet loaded)
+    /// - Non-empty array: This is a directory with loaded children
+    /// Not included in Hashable to prevent hash invalidation when state changes.
     var children: [FileNode]?
 
     /// Whether this node is a directory
@@ -29,12 +46,11 @@ struct FileNode: Identifiable, Hashable {
     }
 
     /// Whether this is a gitignored file (for gray display)
+    /// Not included in Hashable to prevent hash invalidation when state changes.
     var isGitIgnored: Bool = false
 
-    /// Whether this node is currently expanded (for directories)
-    var isExpanded: Bool = false
-
     /// Whether children have been loaded (for lazy loading)
+    /// Not included in Hashable to prevent hash invalidation when state changes.
     var isLoaded: Bool = false
 
     init(
@@ -49,8 +65,21 @@ struct FileNode: Identifiable, Hashable {
         self.isGitIgnored = isGitIgnored
     }
 
+    // MARK: - Hashable (only immutable properties)
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(url)
+    }
+
+    static func == (lhs: FileNode, rhs: FileNode) -> Bool {
+        lhs.id == rhs.id && lhs.url == rhs.url
+    }
+
     /// Get the appropriate SF Symbol for this file type.
-    var iconName: String {
+    /// - Parameter isExpanded: Whether the directory is expanded (only relevant for directories).
+    ///   This parameter is provided by the ViewModel which manages expansion state.
+    func iconName(isExpanded: Bool = false) -> String {
         if isDirectory {
             return isExpanded ? "folder.fill" : "folder"
         }
