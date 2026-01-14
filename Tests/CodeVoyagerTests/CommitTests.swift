@@ -10,6 +10,24 @@ struct CommitTests {
         #expect(commit.shortSHA == "abc123d")
     }
 
+    @Test("Commit shortSHA handles empty string")
+    func shortSHAEmpty() {
+        let commit = makeCommit(sha: "")
+        #expect(commit.shortSHA == "")
+    }
+
+    @Test("Commit shortSHA handles string shorter than 7 characters")
+    func shortSHAShorterThan7() {
+        let commit = makeCommit(sha: "abc")
+        #expect(commit.shortSHA == "abc")
+    }
+
+    @Test("Commit shortSHA handles exactly 7 characters")
+    func shortSHAExactly7() {
+        let commit = makeCommit(sha: "abc1234")
+        #expect(commit.shortSHA == "abc1234")
+    }
+
     @Test("Commit summary returns first line of message")
     func summary() {
         let commit = makeCommit(message: "First line\nSecond line\nThird line")

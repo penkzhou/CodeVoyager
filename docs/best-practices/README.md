@@ -12,6 +12,7 @@
 | [thread-safety.md](thread-safety.md) | 线程安全 | MainActor 与 AppKit 集成 |
 | [naming-conventions.md](naming-conventions.md) | 命名规范 | 避免与系统类型冲突 |
 | [testing-guidelines.md](testing-guidelines.md) | 测试指南 | 确保充分的测试覆盖 |
+| [string-handling.md](string-handling.md) | 字符串处理 | 行数计算、前缀提取等边界情况 |
 
 ## 快速参考
 

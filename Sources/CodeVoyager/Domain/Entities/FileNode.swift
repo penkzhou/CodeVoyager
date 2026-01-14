@@ -148,8 +148,27 @@ struct FileContent: Identifiable, Hashable {
         self.content = content
         self.encoding = encoding
         self.lineEnding = lineEnding
-        self.lineCount = content.components(separatedBy: .newlines).count
+        self.lineCount = Self.calculateLineCount(content)
         self.isBinary = isBinary
         self.fileSize = fileSize
+    }
+
+    /// Calculate the number of lines in content.
+    /// - Empty content returns 0
+    /// - Content without newlines returns 1
+    /// - Trailing newline does not add an extra line
+    private static func calculateLineCount(_ content: String) -> Int {
+        if content.isEmpty { return 0 }
+
+        let components = content.components(separatedBy: .newlines)
+        let count = components.count
+
+        // If content ends with a newline, the last component is empty
+        // We should not count this empty trailing component as a line
+        if let last = components.last, last.isEmpty {
+            return max(0, count - 1)
+        }
+
+        return count
     }
 }

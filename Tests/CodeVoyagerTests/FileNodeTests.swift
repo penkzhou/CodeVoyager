@@ -100,6 +100,35 @@ struct FileContentTests {
         #expect(content.lineCount == 3)
     }
 
+    @Test("FileContent calculates line count for empty content")
+    func lineCountEmpty() {
+        let content = FileContent(
+            path: "/test/empty.txt",
+            content: ""
+        )
+        // Empty file should have 0 lines
+        #expect(content.lineCount == 0)
+    }
+
+    @Test("FileContent calculates line count for single line without newline")
+    func lineCountSingleLine() {
+        let content = FileContent(
+            path: "/test/single.txt",
+            content: "Hello World"
+        )
+        #expect(content.lineCount == 1)
+    }
+
+    @Test("FileContent calculates line count for content ending with newline")
+    func lineCountTrailingNewline() {
+        let content = FileContent(
+            path: "/test/trailing.txt",
+            content: "Line 1\nLine 2\n"
+        )
+        // "Line 1\nLine 2\n" should be 2 lines (trailing newline doesn't add a line)
+        #expect(content.lineCount == 2)
+    }
+
     @Test("FileContent detects files over 50MB as too large")
     func isTooLarge() {
         let smallFile = FileContent(
@@ -119,6 +148,22 @@ struct FileContentTests {
             fileSize: 50 * 1024 * 1024 // 50MB exactly
         )
         #expect(exactlyAtLimit.isTooLarge == false)
+    }
+
+    @Test("FileContent isBinary property")
+    func isBinary() {
+        let textFile = FileContent(
+            path: "/test/file.txt",
+            content: "Hello",
+            isBinary: false
+        )
+        #expect(textFile.isBinary == false)
+
+        let binaryFile = FileContent(
+            path: "/test/image.png",
+            isBinary: true
+        )
+        #expect(binaryFile.isBinary == true)
     }
 }
 
