@@ -9,14 +9,23 @@ on:
   pull_request:
     branches: [ "main" ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
 
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: swift build -v
+    - uses: actions/checkout@v6
+    - name: Cache SwiftPM dependencies
+      uses: actions/cache@v5
+      with:
+        path: .build
+        key: ${{ runner.os }}-swiftpm-${{ hashFiles('Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-swiftpm-
     - name: Run tests
       run: swift test -v

@@ -151,6 +151,14 @@ Each feature lives in `CodeVoyager/Features/`:
 - **行数计算**：必须测试空内容、单行、多行、trailing newline 等场景
 - **集合操作**：必须测试空集合、单元素、边界索引等场景
 
+### 性能测试时间阈值
+- **避免紧凑的墙钟时间限制**：单元测试中的性能断言应使用宽松阈值（建议 10x~100x 预期值）
+- 原因：Debug 构建、CI 环境、系统负载等因素可能使执行时间波动 5-10 倍
+- 性能测试的目的是**检测严重退化**，而非精确基准测量
+- 如需精确性能基准，使用 XCTest 的 `measure` API 或单独的性能测试套件
+- 示例：预期 10ms 完成的操作，阈值可设为 100ms~1000ms
+- 详细模式参见 `docs/best-practices/performance-testing.md`
+
 ### 代码注释维护
 - 定期清理过时的占位符代码和注释
 - Phase 标记（如 "Coming in Phase 2"）在功能实现后应及时更新或删除
