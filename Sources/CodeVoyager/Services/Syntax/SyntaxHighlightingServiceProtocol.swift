@@ -131,6 +131,18 @@ public protocol SyntaxHighlightingServiceProtocol: AnyObject {
         context: HighlightingContext
     ) throws -> HighlightingSession
 
+    /// 更新指定文件的内容并触发重新高亮
+    ///
+    /// - Parameters:
+    ///   - fileURL: 文件 URL
+    ///   - newContent: 新内容
+    ///   - previousContentLength: 旧内容长度（用于增量更新）
+    func updateContent(
+        for fileURL: URL,
+        newContent: String,
+        previousContentLength: Int
+    )
+
     /// 释放文件的高亮会话
     ///
     /// 调用后，相关资源会进入 LRU 缓存以便重用

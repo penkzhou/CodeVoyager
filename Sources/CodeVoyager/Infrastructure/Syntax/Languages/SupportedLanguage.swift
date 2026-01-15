@@ -24,7 +24,7 @@ public enum SupportedLanguage: String, CaseIterable, Sendable {
         case .swift: return "Swift"
         case .javascript: return "JavaScript"
         case .typescript: return "TypeScript"
-        case .tsx: return "TSX"
+        case .tsx: return "TypeScript"
         case .python: return "Python"
         case .json: return "JSON"
         case .markdown: return "Markdown"
@@ -40,7 +40,7 @@ public enum SupportedLanguage: String, CaseIterable, Sendable {
         case .swift: return "swift"
         case .javascript: return "j.square"         // 使用有效的 SF Symbol
         case .typescript: return "t.square"
-        case .tsx: return "t.square.fill"
+        case .tsx: return "t.square"
         case .python: return "chevron.left.forwardslash.chevron.right"  // 使用代码符号
         case .json: return "curlybraces"
         case .markdown: return "doc.richtext"

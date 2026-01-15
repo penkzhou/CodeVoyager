@@ -16,15 +16,15 @@ let package = Package(
     ],
     dependencies: [
         // Database for caching Git metadata
-        .package(url: "https://github.com/groue/GRDB.swift.git", from: "6.0.0"),
+        .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0"),
 
         // Syntax Highlighting - Core
-        .package(url: "https://github.com/krzyzanowskim/STTextView.git", from: "0.9.0"),
-        .package(url: "https://github.com/ChimeHQ/Neon.git", exact: "0.5.1"),
-        .package(url: "https://github.com/ChimeHQ/SwiftTreeSitter.git", .upToNextMinor(from: "0.7.1")),
+        .package(url: "https://github.com/krzyzanowskim/STTextView.git", from: "2.3.4"),
+        .package(url: "https://github.com/ChimeHQ/Neon.git", exact: "0.6.0"),
+        .package(url: "https://github.com/ChimeHQ/SwiftTreeSitter.git", exact: "0.8.0"),
 
         // Tree-sitter Language Grammars (consolidated package with all supported languages)
-        .package(url: "https://github.com/simonbs/TreeSitterLanguages.git", from: "0.1.0"),
+        .package(url: "https://github.com/simonbs/TreeSitterLanguages.git", from: "0.1.10"),
     ],
     targets: [
         .executableTarget(

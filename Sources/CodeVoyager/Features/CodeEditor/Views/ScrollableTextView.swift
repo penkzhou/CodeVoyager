@@ -54,17 +54,17 @@ struct ScrollableTextView: NSViewRepresentable {
         // Configure text view
         textView.isEditable = false
         textView.isSelectable = true
-        textView.widthTracksTextView = true
+        textView.isHorizontallyResizable = false  // Renamed from widthTracksTextView
         textView.highlightSelectedLine = false
         textView.font = font
 
         // Set initial text
         context.coordinator.isUpdating = true
-        textView.setAttributedString(NSAttributedString(text))
+        textView.attributedText = NSAttributedString(text)
         context.coordinator.isUpdating = false
 
         // Set selection to beginning to prevent STTextView from scrolling to end
-        textView.setSelectedRange(NSRange(location: 0, length: 0))
+        textView.selectAndShow(NSRange(location: 0, length: 0))
 
         // Scroll to top initially
         scrollToTop(scrollView, textView: textView)
@@ -87,11 +87,11 @@ struct ScrollableTextView: NSViewRepresentable {
 
         if currentTextString != newTextString {
             context.coordinator.isUpdating = true
-            textView.setAttributedString(NSAttributedString(text))
+            textView.attributedText = NSAttributedString(text)
             context.coordinator.isUpdating = false
 
             // Set selection to beginning to prevent STTextView from scrolling to end
-            textView.setSelectedRange(NSRange(location: 0, length: 0))
+            textView.selectAndShow(NSRange(location: 0, length: 0))
 
             if scrollToTopOnContentChange {
                 // Scroll to top when content changes (new file opened)

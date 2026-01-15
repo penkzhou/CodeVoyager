@@ -2,8 +2,6 @@ import AppKit
 import SwiftUI
 import STTextView
 import STTextViewUI
-import Neon
-import TreeSitterClient
 import os.log
 
 /// A text view with integrated syntax highlighting.
@@ -44,6 +42,7 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
     /// Theme manager for styling
     let themeManager: ThemeManagerProtocol
 
+    @MainActor
     init(
         content: String,
         fileURL: URL,
@@ -51,7 +50,7 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
         scrollToTopOnContentChange: Bool = true,
         font: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular),
         languageRegistry: LanguageRegistryProtocol = LanguageRegistry.shared,
-        themeManager: ThemeManagerProtocol = ThemeManager.shared
+        themeManager: ThemeManagerProtocol? = nil
     ) {
         self.content = content
         self.fileURL = fileURL
@@ -59,7 +58,7 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
         self.scrollToTopOnContentChange = scrollToTopOnContentChange
         self.font = font
         self.languageRegistry = languageRegistry
-        self.themeManager = themeManager
+        self.themeManager = themeManager ?? ThemeManager.shared
     }
 
     func makeNSView(context: Context) -> NSScrollView {
@@ -69,7 +68,7 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
         // Configure text view
         textView.isEditable = false
         textView.isSelectable = true
-        textView.widthTracksTextView = true
+        textView.isHorizontallyResizable = false  // Renamed from widthTracksTextView
         textView.highlightSelectedLine = false
         textView.font = font
 
@@ -80,11 +79,11 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
         // Set initial text
         context.coordinator.isUpdating = true
         let attributedString = createAttributedString(from: content, theme: theme)
-        textView.setAttributedString(attributedString)
+        textView.attributedText = attributedString
         context.coordinator.isUpdating = false
 
-        // Set selection to beginning
-        textView.setSelectedRange(NSRange(location: 0, length: 0))
+        // Set selection to beginning and scroll to top
+        textView.selectAndShow(NSRange(location: 0, length: 0))
 
         // Store reference for highlighting
         context.coordinator.textView = textView
@@ -94,14 +93,15 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
         // Setup syntax highlighting
         context.coordinator.setupHighlighting(
             content: content,
-            fileURL: fileURL,
-            languageRegistry: languageRegistry,
-            themeManager: themeManager,
-            font: font
+            fileURL: fileURL
         )
 
-        // Scroll to top initially
-        scrollToTop(scrollView, textView: textView)
+        // Scroll to initial position
+        if scrollToTopOnContentChange {
+            scrollToTop(scrollView, textView: textView)
+        } else {
+            restoreScrollPosition(scrollView, offset: scrollOffset)
+        }
 
         // Observe scroll position changes
         context.coordinator.observeScroll(scrollView: scrollView)
@@ -110,6 +110,7 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
+        context.coordinator.parent = self
         let textView = scrollView.documentView as! STTextView
 
         // Check if content changed
@@ -119,6 +120,8 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
         let fileChanged = context.coordinator.currentFileURL != fileURL
 
         if contentChanged || fileChanged {
+            let previousContentLength = context.coordinator.currentContent.utf16.count
+            let previousFileURL = context.coordinator.currentFileURL
             context.coordinator.isUpdating = true
 
             // Update theme
@@ -127,12 +130,12 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
 
             // Update text
             let attributedString = createAttributedString(from: content, theme: theme)
-            textView.setAttributedString(attributedString)
+            textView.attributedText = attributedString
 
             context.coordinator.isUpdating = false
 
-            // Set selection to beginning
-            textView.setSelectedRange(NSRange(location: 0, length: 0))
+            // Set selection to beginning and scroll to top
+            textView.selectAndShow(NSRange(location: 0, length: 0))
 
             // Update stored state
             context.coordinator.currentContent = content
@@ -140,16 +143,19 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
 
             // Re-setup highlighting if file changed
             if fileChanged {
+                if let previousFileURL = previousFileURL {
+                    context.coordinator.releaseHighlightingSession(for: previousFileURL)
+                }
                 context.coordinator.setupHighlighting(
                     content: content,
-                    fileURL: fileURL,
-                    languageRegistry: languageRegistry,
-                    themeManager: themeManager,
-                    font: font
+                    fileURL: fileURL
                 )
             } else if contentChanged {
-                // Just invalidate if only content changed
-                context.coordinator.invalidateHighlighting()
+                context.coordinator.updateHighlightingContent(
+                    fileURL: fileURL,
+                    newContent: content,
+                    previousContentLength: previousContentLength
+                )
             }
 
             if scrollToTopOnContentChange {
@@ -211,9 +217,8 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
         var currentFileURL: URL?
 
         private var scrollObserver: NSObjectProtocol?
-        private var highlighter: Highlighter?
-        private var treeSitterClient: TreeSitterClient?
-        private var currentLanguage: SupportedLanguage?
+        private var highlightingSession: HighlightingSession?
+        private var highlightingService: SyntaxHighlightingServiceProtocol?
 
         init(parent: SyntaxHighlightedTextView) {
             self.parent = parent
@@ -246,19 +251,65 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
                 }
 
                 // Notify highlighter of visible content change
-                self.highlighter?.visibleContentDidChange()
+                if let highlightingSession = self.highlightingSession {
+                    Task { @MainActor in
+                        highlightingSession.visibleContentDidChange()
+                    }
+                }
             }
 
             scrollView.contentView.postsBoundsChangedNotifications = true
         }
 
         @MainActor
+        private func resolveHighlightingService() -> SyntaxHighlightingServiceProtocol {
+            if let highlightingService = highlightingService {
+                return highlightingService
+            }
+
+            let service = SyntaxHighlightingService(
+                languageRegistry: parent.languageRegistry,
+                themeManager: parent.themeManager,
+                baseFont: parent.font
+            )
+            highlightingService = service
+            return service
+        }
+
+        @MainActor
+        func releaseHighlightingSession(for fileURL: URL) {
+            guard let highlightingService = highlightingService else {
+                return
+            }
+
+            highlightingService.releaseSession(for: fileURL)
+            if highlightingSession?.fileURL == fileURL {
+                highlightingSession = nil
+            }
+        }
+
+        @MainActor
+        func updateHighlightingContent(
+            fileURL: URL,
+            newContent: String,
+            previousContentLength: Int
+        ) {
+            guard highlightingSession?.fileURL == fileURL else {
+                return
+            }
+
+            let highlightingService = resolveHighlightingService()
+            highlightingService.updateContent(
+                for: fileURL,
+                newContent: newContent,
+                previousContentLength: previousContentLength
+            )
+        }
+
+        @MainActor
         func setupHighlighting(
             content: String,
-            fileURL: URL,
-            languageRegistry: LanguageRegistryProtocol,
-            themeManager: ThemeManagerProtocol,
-            font: NSFont
+            fileURL: URL
         ) {
             guard let textView = textView else {
                 Self.logger.warning("Cannot setup highlighting: textView is nil")
@@ -266,81 +317,45 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
             }
 
             // Detect language
-            guard let language = languageRegistry.detectLanguage(for: fileURL) else {
+            guard let language = parent.languageRegistry.detectLanguage(for: fileURL) else {
                 Self.logger.debug("No supported language detected for \(fileURL.lastPathComponent)")
-                currentLanguage = nil
-                highlighter = nil
-                treeSitterClient = nil
+                highlightingSession = nil
                 return
             }
 
-            // Get or create TreeSitterClient
+            let highlightingService = resolveHighlightingService()
+
+            let context = HighlightingContext(
+                fileURL: fileURL,
+                language: language,
+                content: content
+            )
+
             do {
-                let config = try languageRegistry.configuration(for: language)
-
-                // Create new client if language changed
-                if currentLanguage != language {
-                    treeSitterClient = try TreeSitterClient(language: config.tsLanguage)
-                    currentLanguage = language
-                    Self.logger.debug("Created TreeSitterClient for \(language.displayName)")
-                }
-
-                guard let client = treeSitterClient,
-                      let query = config.highlightsQuery else {
-                    Self.logger.warning("Missing client or query for \(language.displayName)")
-                    return
-                }
-
-                // Set initial content
-                client.didChangeContent(
-                    to: content,
-                    in: NSRange(location: 0, length: 0),
-                    delta: content.utf16.count,
-                    limit: content.utf16.count
+                highlightingSession = try highlightingService.createSession(
+                    for: textView,
+                    context: context
                 )
-
-                // Capture current theme for the closure
-                // Note: Theme changes during highlighting session will use the captured theme
-                let currentTheme = themeManager.currentTheme
-
-                // Create text system interface
-                let textInterface = STTextViewSystemInterface(
-                    textView: textView,
-                    attributeProvider: { token in
-                        let style = currentTheme.style(for: token.name)
-                        return style.attributes(baseFont: font)
-                    }
-                )
-
-                // Create token provider
-                let tokenProvider = client.tokenProvider(
-                    with: query,
-                    executionMode: .asynchronous(prefetch: true)
-                )
-
-                // Create highlighter
-                highlighter = Highlighter(
-                    textInterface: textInterface,
-                    tokenProvider: tokenProvider
-                )
-
-                // Setup invalidation handler
-                client.invalidationHandler = { [weak self] ranges in
-                    self?.highlighter?.invalidate(.set(ranges))
-                }
-
-                // Trigger initial highlighting
-                highlighter?.invalidate(.all)
-
                 Self.logger.debug("Syntax highlighting setup complete for \(fileURL.lastPathComponent)")
-
+            } catch let error as SyntaxHighlightingError {
+                highlightingSession = nil
+                Self.logger.error(
+                    "Failed to setup highlighting for \(fileURL.lastPathComponent): \(error.localizedDescription). File will be displayed without syntax highlighting."
+                )
             } catch {
-                Self.logger.error("Failed to setup highlighting: \(error.localizedDescription)")
+                highlightingSession = nil
+                Self.logger.error(
+                    "Failed to setup highlighting for \(fileURL.lastPathComponent): \(error.localizedDescription). File will be displayed without syntax highlighting."
+                )
             }
         }
 
         func invalidateHighlighting() {
-            highlighter?.invalidate(.all)
+            if let highlightingSession = highlightingSession {
+                Task { @MainActor in
+                    highlightingSession.invalidate()
+                }
+            }
         }
     }
 }

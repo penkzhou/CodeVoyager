@@ -60,13 +60,13 @@ public final class SyntaxHighlightingService: SyntaxHighlightingServiceProtocol 
     ///   - cacheCapacity: LRU 缓存容量，默认 10
     ///   - baseFont: 基础字体，默认 13pt 等宽字体
     public init(
-        languageRegistry: LanguageRegistryProtocol = LanguageRegistry.shared,
-        themeManager: ThemeManagerProtocol = ThemeManager.shared,
+        languageRegistry: LanguageRegistryProtocol? = nil,
+        themeManager: ThemeManagerProtocol? = nil,
         cacheCapacity: Int = 10,
         baseFont: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular)
     ) {
-        self.languageRegistry = languageRegistry
-        self.themeManager = themeManager
+        self.languageRegistry = languageRegistry ?? LanguageRegistry.shared
+        self.themeManager = themeManager ?? ThemeManager.shared
         self.cacheCapacity = cacheCapacity
         self.baseFont = baseFont
     }
@@ -156,6 +156,36 @@ public final class SyntaxHighlightingService: SyntaxHighlightingServiceProtocol 
         Self.logger.debug("Successfully created highlighting session for \(fileURL.lastPathComponent)")
 
         return session
+    }
+
+    public func updateContent(
+        for fileURL: URL,
+        newContent: String,
+        previousContentLength: Int
+    ) {
+        guard let session = activeSessions[fileURL] else {
+            Self.logger.warning(
+                "No active highlighting session for \(fileURL.lastPathComponent). File will be displayed without updated syntax highlighting."
+            )
+            return
+        }
+
+        guard let client = clientCache[session.language] else {
+            Self.logger.warning(
+                "Missing TreeSitterClient for \(session.language.displayName) while updating \(fileURL.lastPathComponent). File will be displayed without updated syntax highlighting."
+            )
+            return
+        }
+
+        let newLength = newContent.utf16.count
+        client.didChangeContent(
+            to: newContent,
+            in: NSRange(location: 0, length: previousContentLength),
+            delta: newLength - previousContentLength,
+            limit: newLength
+        )
+
+        session.invalidate()
     }
 
     public func releaseSession(for fileURL: URL) {

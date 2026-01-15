@@ -771,6 +771,7 @@ struct CaptureNamesTests {
     func literalCaptureNames() {
         #expect(CaptureNames.string == "string")
         #expect(CaptureNames.stringSpecial == "string.special")
+        #expect(CaptureNames.stringEscape == "string.escape")
         #expect(CaptureNames.number == "number")
         #expect(CaptureNames.boolean == "boolean")
         #expect(CaptureNames.constant == "constant")
@@ -788,6 +789,7 @@ struct CaptureNamesTests {
         #expect(CaptureNames.punctuation == "punctuation")
         #expect(CaptureNames.punctuationDelimiter == "punctuation.delimiter")
         #expect(CaptureNames.punctuationBracket == "punctuation.bracket")
+        #expect(CaptureNames.punctuationSpecial == "punctuation.special")
     }
 
     @Test("Operator capture name is correct")
@@ -818,5 +820,11 @@ struct CaptureNamesTests {
         #expect(CaptureNames.markupLink == "markup.link")
         #expect(CaptureNames.markupRaw == "markup.raw")
         #expect(CaptureNames.markupList == "markup.list")
+        #expect(CaptureNames.textTitle == "text.title")
+        #expect(CaptureNames.textLiteral == "text.literal")
+        #expect(CaptureNames.textURI == "text.uri")
+        #expect(CaptureNames.textReference == "text.reference")
+        #expect(CaptureNames.textEmphasis == "text.emphasis")
+        #expect(CaptureNames.textStrong == "text.strong")
     }
 }

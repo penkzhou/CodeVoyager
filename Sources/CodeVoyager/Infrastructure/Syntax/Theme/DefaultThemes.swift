@@ -198,6 +198,7 @@ public enum DefaultThemes {
             // Literals
             CaptureNames.string: .plain(string),
             CaptureNames.stringSpecial: .plain(string),
+            CaptureNames.stringEscape: .plain(string),
             CaptureNames.number: .plain(number),
             CaptureNames.boolean: .bold(constant),
             CaptureNames.constant: .plain(constant),
@@ -211,6 +212,7 @@ public enum DefaultThemes {
             CaptureNames.punctuation: .plain(punctuation),
             CaptureNames.punctuationDelimiter: .plain(punctuation),
             CaptureNames.punctuationBracket: .plain(punctuation),
+            CaptureNames.punctuationSpecial: .plain(punctuation),
 
             // Operators
             CaptureNames.operator: .plain(`operator`),
@@ -231,6 +233,12 @@ public enum DefaultThemes {
             CaptureNames.markupLink: .plain(link),
             CaptureNames.markupRaw: .plain(string),
             CaptureNames.markupList: .plain(punctuation),
+            CaptureNames.textTitle: .bold(heading),
+            CaptureNames.textLiteral: .plain(string),
+            CaptureNames.textURI: .plain(link),
+            CaptureNames.textReference: .plain(link),
+            CaptureNames.textEmphasis: .italic(heading),
+            CaptureNames.textStrong: .bold(heading),
         ]
     }
 }

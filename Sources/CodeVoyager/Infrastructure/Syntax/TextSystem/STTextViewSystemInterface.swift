@@ -29,6 +29,10 @@ import os.log
 /// ## 性能说明
 /// - 使用 `updateLayout: false` 避免每个 Token 触发重排
 /// - 调用者应在批量高亮完成后手动触发 `textView.needsLayout = true`
+///
+/// ## 线程安全
+/// 此类型标记为 `@MainActor`，因为所有 STTextView 操作必须在主线程执行。
+@MainActor
 public struct STTextViewSystemInterface {
     private static let logger = Logger(subsystem: "CodeVoyager", category: "STTextViewSystemInterface")
 
@@ -140,9 +144,14 @@ private extension STTextViewSystemInterface {
 // MARK: - NSTextContentManager Length Extension
 
 extension NSTextContentManager {
+    private static let logger = Logger(subsystem: "CodeVoyager", category: "NSTextContentManager")
+
     /// 文本内容的总长度
     var length: Int {
         guard let textStorage = (self as? NSTextContentStorage)?.textStorage else {
+            Self.logger.warning(
+                "Failed to access textStorage. Falling back to enumerating text elements to compute length; highlighting may be slower."
+            )
             // 降级：遍历计算长度
             var totalLength = 0
             enumerateTextElements(from: documentRange.location) { element in
