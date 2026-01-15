@@ -53,6 +53,18 @@ Infrastructure        → Neon/TreeSitter, CacheManager, Concurrency, Logging
 - GRDB.swift (caching)
 - SwiftGit3 (or SwiftGitX as fallback)
 
+### SwiftPM 资源管理
+- **Bundle 命名规范**：SwiftPM 生成的资源 Bundle 名称格式为 `<PackageName>_<TargetName>.bundle`
+- 使用第三方包的资源时，先检查实际生成的 bundle 名称（查看 `.build/` 目录）
+- 示例：TreeSitterLanguages 包的 bundle 名为 `TreeSitterLanguages_TreeSitterSwiftQueries`，而非 `TreeSitterSwift_TreeSitterSwiftQueries`
+- 详细模式参见 `docs/best-practices/swiftpm-resources.md`
+
+### SF Symbol 使用
+- **仅使用官方支持的 SF Symbol 图标名称**
+- 参考：https://developer.apple.com/sf-symbols/
+- 如 `js.circle` 不存在，应使用 `j.square` 等有效名称
+- 在代码注释中标明目标 macOS 版本的兼容性
+
 ## Feature Modules
 
 Each feature lives in `CodeVoyager/Features/`:
@@ -79,10 +91,28 @@ Each feature lives in `CodeVoyager/Features/`:
 - **禁止空 catch 块** - 即使错误可以降级处理，也必须记录日志（至少 `logger.warning()`）
 - 在注释中说明降级行为（如 "Return false as fallback - file will be treated as not ignored"）
 - 错误消息应包含用户可操作的指引，例如："请选择包含 .git 文件夹的目录"
+- 详细模式参见 `docs/best-practices/error-logging-patterns.md`
+
+### 日志记录规范
+- **降级行为必须记录日志**：当代码选择优雅降级而非失败时，至少使用 `logger.warning()` 记录：
+  - 发生了什么错误
+  - 采取了什么降级策略
+  - 对用户的影响
+- **回退逻辑记录 debug 日志**：当存在多个查找路径（如 Bundle 查找策略）时，使用 `logger.debug()` 记录回退行为
+- 示例格式：`"Failed to [action] for \(context): \(error.localizedDescription). [降级行为说明]"`
+
+### 工厂方法与初始化器
+- 当类型需要复杂初始化逻辑时，使用工厂方法（如 `create(for:)`）
+- 将 memberwise initializer 设为 `internal` 或添加文档说明其用途
+- 工厂方法文档中说明何时使用工厂方法 vs 直接初始化
+- **所有初始化器应显式标记访问级别**（`public`、`internal`、`private`）
 
 ### SwiftUI/AppKit 集成
-- 使用 AppKit UI 组件（如 NSOpenPanel）的类必须标记 `@MainActor`
+- 使用 AppKit UI 组件（如 NSOpenPanel、NSApp）的类必须标记 `@MainActor`
 - 避免与 SwiftUI 内置类型重名（如 TabView、Text、Button 等）
+- **测试环境兼容性**：使用 `NSApp` 等全局对象时，需处理测试环境中可能为 nil 的情况
+  - 模式：`guard let app = NSApp else { return defaultValue }`
+  - 对应的测试 Suite 需标记 `@MainActor`
 
 ### SwiftUI ViewModel 线程安全
 - 所有使用 `@Observable` 宏且在 async 方法中更新 UI 状态的 ViewModel **必须**标记 `@MainActor`
@@ -105,6 +135,13 @@ Each feature lives in `CodeVoyager/Features/`:
 - 所有 async 方法必须有测试覆盖
 - 测试用例应覆盖正常路径和错误路径
 - 所有公开的 Bool 属性必须有测试覆盖
+- 每个公开 API 的方法都应有对应的单元测试
+- 边界情况和降级行为需要测试覆盖
+
+### 测试专用方法
+- 测试专用方法（如 `reset()`）应使用 `#if DEBUG` 包装，防止在生产代码中被误用
+- 文档注释中明确标注"仅用于测试"
+- 示例模式参见 `docs/best-practices/testing-patterns.md`
 
 ### 边界情况测试
 - **字符串处理**：对于 `prefix`、`suffix` 等操作必须测试：
@@ -119,6 +156,12 @@ Each feature lives in `CodeVoyager/Features/`:
 - Phase 标记（如 "Coming in Phase 2"）在功能实现后应及时更新或删除
 - 不再使用的占位符组件应直接删除，而非保留
 - **代码注释中的示例输出必须与实际实现行为完全一致**
+
+### 文档注释完整性
+- 有副作用的方法（如清除缓存同时重置其他状态）必须在文档中完整说明所有副作用
+- `Equatable` 实现如果只比较部分属性，必须添加 `Warning` 说明可能导致的问题
+- 集合属性（如 `all` 数组）如需手动维护，应在注释中提醒新增元素时更新
+- 示例模式参见 `docs/best-practices/documentation-patterns.md`
 
 ### 方法签名诚实性
 - 如果方法签名声明 `throws` 但实际从不抛出错误（总是返回默认值），应移除 `throws`
@@ -157,6 +200,29 @@ Each feature lives in `CodeVoyager/Features/`:
 - 确保条件分支有不同的行为，避免相同 return 语句出现在多个分支
 - 删除永远不会执行的代码路径
 - 使用 guard 简化早返回模式
+
+### 代码简化准则
+- **switch-case 简化**：当所有 case 返回值与某个属性一致时，直接使用该属性
+  - 示例：`treeSitterLanguageName` 如果与 `rawValue` 一致，直接返回 `rawValue`
+- **nil 合并运算符**：优先使用 `??` 替代 if-let 模式
+  - 示例：`tokenStyles[captureName] ?? defaultStyle` 替代 if-let + 默认返回
+- **Bool 比较简化**：对于带关联值的枚举，使用 `self == .case` 而非 switch-case
+  - 示例：`self == .followSystem` 替代 switch 返回 true/false
+
+### 协议默认实现
+- **不要重复实现协议提供的默认方法**：如果实现完全相同，直接使用协议默认实现
+- 添加注释说明哪些方法依赖默认实现：`// Note: 使用 XxxProtocol 的默认实现`
+- 仅在需要自定义行为时才覆盖默认实现
+
+### 单例模式与测试支持
+- **允许 `public init()` 与 `static let shared` 共存**：这是支持测试的设计模式
+- 在类级文档中说明设计意图：`/// 推荐使用 shared 实例，public init() 用于测试场景的依赖注入`
+- 测试专用方法（如 `reset()`）使用 `#if DEBUG` 包装
+
+### 静态 Logger 实例
+- **频繁调用的方法不应每次创建 Logger 实例**
+- 在类型中使用 `private static let logger = Logger(...)` 作为静态属性
+- 特别是在 struct 中，避免在热路径（如字体生成）中重复创建 Logger
 
 ### 错误消息上下文
 - 用户可见的错误消息应包含具体上下文（如文件路径）和原始错误描述

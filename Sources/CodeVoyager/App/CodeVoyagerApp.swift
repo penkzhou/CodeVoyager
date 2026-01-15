@@ -6,6 +6,13 @@ import SwiftUI
 struct CodeVoyagerApp: App {
     @State private var appState = AppState()
 
+    init() {
+        // 预加载语法高亮语言配置，避免首次使用时的延迟
+        Task.detached(priority: .background) {
+            LanguageRegistry.shared.preloadAllConfigurations()
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             MainWindowView()
