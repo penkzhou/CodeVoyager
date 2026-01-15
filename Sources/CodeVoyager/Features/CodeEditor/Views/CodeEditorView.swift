@@ -5,9 +5,10 @@ import STTextViewUI
 /// Code editor view for displaying file contents with syntax highlighting.
 /// Uses STTextView (TextKit 2) for high-performance text rendering.
 ///
-/// Supports scroll position management:
-/// - New files automatically scroll to top
-/// - When switching tabs, scroll position is preserved and restored
+/// Supports:
+/// - Syntax highlighting based on file extension
+/// - Scroll position persistence
+/// - Language detection and display
 struct CodeEditorView: View {
     let content: FileContent
     let fileName: String
@@ -18,22 +19,28 @@ struct CodeEditorView: View {
     /// Whether this is a newly opened file (should scroll to top).
     let isNewFile: Bool
 
-    @State private var text: AttributedString = AttributedString()
+    /// Language registry for syntax highlighting
+    let languageRegistry: LanguageRegistryProtocol
 
     /// Internal scroll offset state for the text view.
     /// This is synced with the binding.
     @State private var internalScrollOffset: CGFloat = 0
 
+    /// Detected language for the file
+    @State private var detectedLanguage: SupportedLanguage?
+
     init(
         content: FileContent,
         fileName: String,
         scrollOffset: Binding<CGFloat> = .constant(0),
-        isNewFile: Bool = true
+        isNewFile: Bool = true,
+        languageRegistry: LanguageRegistryProtocol = LanguageRegistry.shared
     ) {
         self.content = content
         self.fileName = fileName
         self._scrollOffset = scrollOffset
         self.isNewFile = isNewFile
+        self.languageRegistry = languageRegistry
     }
 
     var body: some View {
@@ -41,10 +48,29 @@ struct CodeEditorView: View {
             // Status bar
             statusBar
 
-            // Text view with scroll position management
+            // Text view with syntax highlighting
             textView
         }
+        .onAppear {
+            detectLanguage()
+            if !isNewFile {
+                internalScrollOffset = scrollOffset
+            }
+        }
+        .onChange(of: content.id) { _, _ in
+            detectLanguage()
+        }
+        .onChange(of: internalScrollOffset) { _, newValue in
+            scrollOffset = newValue
+        }
+        .onChange(of: scrollOffset) { _, newValue in
+            if internalScrollOffset != newValue {
+                internalScrollOffset = newValue
+            }
+        }
     }
+
+    // MARK: - Status Bar
 
     private var statusBar: some View {
         HStack {
@@ -63,10 +89,26 @@ struct CodeEditorView: View {
 
             Spacer()
 
+            // Language indicator
+            if let language = detectedLanguage {
+                HStack(spacing: 4) {
+                    Image(systemName: language.iconName)
+                        .font(.caption2)
+                    Text(language.displayName)
+                        .font(.caption2)
+                }
+                .foregroundStyle(.secondary)
+            } else {
+                Text("Plain Text")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
             // File size
             Text(FormatUtilities.formatFileSize(content.fileSize))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
+                .padding(.leading, 8)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -84,41 +126,23 @@ struct CodeEditorView: View {
         }
     }
 
+    // MARK: - Text View
+
     private var textView: some View {
-        ScrollableTextView(
-            text: $text,
+        SyntaxHighlightedTextView(
+            content: content.content,
+            fileURL: URL(fileURLWithPath: content.path),
             scrollOffset: $internalScrollOffset,
-            scrollToTopOnContentChange: isNewFile
+            scrollToTopOnContentChange: isNewFile,
+            languageRegistry: languageRegistry
         )
-        .onAppear {
-            text = createAttributedString(from: content.content)
-            // Initialize internal scroll offset from binding
-            if !isNewFile {
-                internalScrollOffset = scrollOffset
-            }
-        }
-        .onChange(of: content.id) { _, _ in
-            // Update text when content changes
-            text = createAttributedString(from: content.content)
-        }
-        .onChange(of: internalScrollOffset) { _, newValue in
-            // Sync internal scroll offset to binding
-            scrollOffset = newValue
-        }
-        .onChange(of: scrollOffset) { _, newValue in
-            // Sync binding to internal scroll offset (for restoration)
-            if internalScrollOffset != newValue {
-                internalScrollOffset = newValue
-            }
-        }
     }
 
-    /// Create an AttributedString with monospace font for code display.
-    private func createAttributedString(from text: String) -> AttributedString {
-        var attributedString = AttributedString(text)
-        attributedString.font = .monospacedSystemFont(ofSize: 13, weight: .regular)
-        attributedString.foregroundColor = NSColor.textColor
-        return attributedString
+    // MARK: - Private Helpers
+
+    private func detectLanguage() {
+        let fileURL = URL(fileURLWithPath: content.path)
+        detectedLanguage = languageRegistry.detectLanguage(for: fileURL)
     }
 }
 
@@ -184,7 +208,7 @@ struct LargeFileWarning: View {
 
 // MARK: - Preview
 
-#Preview("Code Editor") {
+#Preview("Code Editor - Swift") {
     let content = FileContent(
         path: "/test/main.swift",
         content: """
@@ -206,6 +230,26 @@ struct LargeFileWarning: View {
     )
 
     CodeEditorView(content: content, fileName: "main.swift")
+        .frame(width: 600, height: 400)
+}
+
+#Preview("Code Editor - Python") {
+    let content = FileContent(
+        path: "/test/main.py",
+        content: """
+        def greet(name):
+            \"\"\"Greet someone.\"\"\"
+            print(f"Hello, {name}!")
+
+        # Main entry
+        if __name__ == "__main__":
+            greet("World")
+        """,
+        lineEnding: .lf,
+        fileSize: 150
+    )
+
+    CodeEditorView(content: content, fileName: "main.py")
         .frame(width: 600, height: 400)
 }
 
