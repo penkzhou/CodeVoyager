@@ -55,94 +55,28 @@ struct SyntaxHighlightingServiceTests {
 
     // MARK: - Language Detection Tests
 
-    @Test("detectLanguage returns correct language for Swift file")
-    func detectSwiftLanguage() {
+    /// 语言检测测试用例：(文件名, 期望的语言)
+    static let languageDetectionCases: [(filename: String, expected: SupportedLanguage?)] = [
+        ("file.swift", .swift),
+        ("file.js", .javascript),
+        ("file.ts", .typescript),
+        ("file.tsx", .tsx),
+        ("file.py", .python),
+        ("file.json", .json),
+        ("file.md", .markdown),
+        ("file.rs", nil),       // 不支持的扩展名
+        ("Makefile", nil),      // 无扩展名
+    ]
+
+    @Test("detectLanguage returns correct language for various file types",
+          arguments: SyntaxHighlightingServiceTests.languageDetectionCases)
+    func detectLanguage(filename: String, expected: SupportedLanguage?) {
         let service = SyntaxHighlightingService()
-        let url = URL(fileURLWithPath: "/path/to/file.swift")
+        let url = URL(fileURLWithPath: "/path/to/\(filename)")
 
         let language = service.detectLanguage(for: url)
 
-        #expect(language == .swift)
-    }
-
-    @Test("detectLanguage returns correct language for JavaScript file")
-    func detectJavaScriptLanguage() {
-        let service = SyntaxHighlightingService()
-        let url = URL(fileURLWithPath: "/path/to/file.js")
-
-        let language = service.detectLanguage(for: url)
-
-        #expect(language == .javascript)
-    }
-
-    @Test("detectLanguage returns correct language for TypeScript file")
-    func detectTypeScriptLanguage() {
-        let service = SyntaxHighlightingService()
-        let url = URL(fileURLWithPath: "/path/to/file.ts")
-
-        let language = service.detectLanguage(for: url)
-
-        #expect(language == .typescript)
-    }
-
-    @Test("detectLanguage returns correct language for TSX file")
-    func detectTSXLanguage() {
-        let service = SyntaxHighlightingService()
-        let url = URL(fileURLWithPath: "/path/to/file.tsx")
-
-        let language = service.detectLanguage(for: url)
-
-        #expect(language == .tsx)
-    }
-
-    @Test("detectLanguage returns correct language for Python file")
-    func detectPythonLanguage() {
-        let service = SyntaxHighlightingService()
-        let url = URL(fileURLWithPath: "/path/to/file.py")
-
-        let language = service.detectLanguage(for: url)
-
-        #expect(language == .python)
-    }
-
-    @Test("detectLanguage returns correct language for JSON file")
-    func detectJSONLanguage() {
-        let service = SyntaxHighlightingService()
-        let url = URL(fileURLWithPath: "/path/to/file.json")
-
-        let language = service.detectLanguage(for: url)
-
-        #expect(language == .json)
-    }
-
-    @Test("detectLanguage returns correct language for Markdown file")
-    func detectMarkdownLanguage() {
-        let service = SyntaxHighlightingService()
-        let url = URL(fileURLWithPath: "/path/to/file.md")
-
-        let language = service.detectLanguage(for: url)
-
-        #expect(language == .markdown)
-    }
-
-    @Test("detectLanguage returns nil for unsupported extension")
-    func detectUnsupportedLanguage() {
-        let service = SyntaxHighlightingService()
-        let url = URL(fileURLWithPath: "/path/to/file.rs")
-
-        let language = service.detectLanguage(for: url)
-
-        #expect(language == nil)
-    }
-
-    @Test("detectLanguage returns nil for file without extension")
-    func detectLanguageNoExtension() {
-        let service = SyntaxHighlightingService()
-        let url = URL(fileURLWithPath: "/path/to/Makefile")
-
-        let language = service.detectLanguage(for: url)
-
-        #expect(language == nil)
+        #expect(language == expected, "Expected \(String(describing: expected)) for \(filename), got \(String(describing: language))")
     }
 
     // MARK: - Initial State Tests

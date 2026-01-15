@@ -16,144 +16,172 @@ struct SyntaxHighlightingPerformanceTests {
 
     // MARK: - Code Generation Helpers
 
-    /// 生成指定行数的 Swift 代码
-    /// - Parameter lineCount: 目标行数
-    /// - Returns: 生成的 Swift 代码字符串
-    private func generateSwiftCode(lineCount: Int) -> String {
-        var lines: [String] = []
-        lines.append("import Foundation")
-        lines.append("")
+    /// 语言特定的代码模板
+    private struct LanguageTemplate {
+        /// 文件头部内容
+        let header: [String]
+        /// 生成函数代码块
+        /// - Parameters:
+        ///   - functionIndex: 函数索引号
+        /// - Returns: 函数的代码行数组
+        let generateFunction: (_ functionIndex: Int) -> [String]
+        /// 每个函数的行数（用于计数）
+        let linesPerFunction: Int
+    }
 
-        var currentLine = 2
+    /// Swift 语言模板
+    private var swiftTemplate: LanguageTemplate {
+        LanguageTemplate(
+            header: ["import Foundation", ""],
+            generateFunction: { index in
+                let name = "function\(index)"
+                return [
+                    "/// Documentation for \(name)",
+                    "/// - Parameter value: The input value",
+                    "/// - Returns: The computed result",
+                    "func \(name)(value: Int) -> Int {",
+                    "    // Local variable declarations",
+                    "    let multiplier = 2",
+                    "    let offset = 10",
+                    "    var result = value * multiplier",
+                    "",
+                    "    // Conditional logic",
+                    "    if result > 100 {",
+                    "        result = result - offset",
+                    "    } else {",
+                    "        result = result + offset",
+                    "    }",
+                    "",
+                    "    // String interpolation",
+                    "    let message = \"Result: \\(result)\"",
+                    "    print(message)",
+                    "",
+                    "    return result",
+                    "}",
+                    ""
+                ]
+            },
+            linesPerFunction: 23
+        )
+    }
+
+    /// Python 语言模板
+    private var pythonTemplate: LanguageTemplate {
+        LanguageTemplate(
+            header: [
+                "#!/usr/bin/env python3",
+                "\"\"\"Generated Python module for performance testing.\"\"\"",
+                "",
+                "import os",
+                "import sys",
+                ""
+            ],
+            generateFunction: { index in
+                let name = "function_\(index)"
+                return [
+                    "def \(name)(value: int) -> int:",
+                    "    \"\"\"",
+                    "    Compute a result from the input value.",
+                    "",
+                    "    Args:",
+                    "        value: The input integer value",
+                    "",
+                    "    Returns:",
+                    "        The computed result",
+                    "    \"\"\"",
+                    "    multiplier = 2",
+                    "    offset = 10",
+                    "    result = value * multiplier",
+                    "",
+                    "    if result > 100:",
+                    "        result = result - offset",
+                    "    else:",
+                    "        result = result + offset",
+                    "",
+                    "    message = f\"Result: {result}\"",
+                    "    print(message)",
+                    "",
+                    "    return result",
+                    "",
+                    ""
+                ]
+            },
+            linesPerFunction: 25
+        )
+    }
+
+    /// JavaScript 语言模板
+    private var javaScriptTemplate: LanguageTemplate {
+        LanguageTemplate(
+            header: [
+                "// Generated JavaScript module for performance testing",
+                "",
+                "const MODULE_NAME = 'PerformanceTest';",
+                ""
+            ],
+            generateFunction: { index in
+                let name = "function\(index)"
+                return [
+                    "/**",
+                    " * Compute a result from the input value.",
+                    " * @param {number} value - The input value",
+                    " * @returns {number} The computed result",
+                    " */",
+                    "function \(name)(value) {",
+                    "    const multiplier = 2;",
+                    "    const offset = 10;",
+                    "    let result = value * multiplier;",
+                    "",
+                    "    if (result > 100) {",
+                    "        result = result - offset;",
+                    "    } else {",
+                    "        result = result + offset;",
+                    "    }",
+                    "",
+                    "    const message = `Result: ${result}`;",
+                    "    console.log(message);",
+                    "",
+                    "    return result;",
+                    "}",
+                    ""
+                ]
+            },
+            linesPerFunction: 22
+        )
+    }
+
+    /// 使用模板生成指定行数的代码
+    /// - Parameters:
+    ///   - template: 语言模板
+    ///   - lineCount: 目标行数
+    /// - Returns: 生成的代码字符串
+    private func generateCode(using template: LanguageTemplate, lineCount: Int) -> String {
+        var lines = template.header
+        var currentLine = template.header.count
         var functionIndex = 0
 
         while currentLine < lineCount {
-            // 每个函数约 20 行
-            let functionName = "function\(functionIndex)"
-            lines.append("/// Documentation for \(functionName)")
-            lines.append("/// - Parameter value: The input value")
-            lines.append("/// - Returns: The computed result")
-            lines.append("func \(functionName)(value: Int) -> Int {")
-            lines.append("    // Local variable declarations")
-            lines.append("    let multiplier = 2")
-            lines.append("    let offset = 10")
-            lines.append("    var result = value * multiplier")
-            lines.append("")
-            lines.append("    // Conditional logic")
-            lines.append("    if result > 100 {")
-            lines.append("        result = result - offset")
-            lines.append("    } else {")
-            lines.append("        result = result + offset")
-            lines.append("    }")
-            lines.append("")
-            lines.append("    // String interpolation")
-            lines.append("    let message = \"Result: \\(result)\"")
-            lines.append("    print(message)")
-            lines.append("")
-            lines.append("    return result")
-            lines.append("}")
-            lines.append("")
-
-            currentLine += 23
+            lines.append(contentsOf: template.generateFunction(functionIndex))
+            currentLine += template.linesPerFunction
             functionIndex += 1
         }
 
         return lines.joined(separator: "\n")
+    }
+
+    /// 生成指定行数的 Swift 代码
+    private func generateSwiftCode(lineCount: Int) -> String {
+        generateCode(using: swiftTemplate, lineCount: lineCount)
     }
 
     /// 生成指定行数的 Python 代码
-    /// - Parameter lineCount: 目标行数
-    /// - Returns: 生成的 Python 代码字符串
     private func generatePythonCode(lineCount: Int) -> String {
-        var lines: [String] = []
-        lines.append("#!/usr/bin/env python3")
-        lines.append("\"\"\"Generated Python module for performance testing.\"\"\"")
-        lines.append("")
-        lines.append("import os")
-        lines.append("import sys")
-        lines.append("")
-
-        var currentLine = 6
-        var functionIndex = 0
-
-        while currentLine < lineCount {
-            let functionName = "function_\(functionIndex)"
-            lines.append("def \(functionName)(value: int) -> int:")
-            lines.append("    \"\"\"")
-            lines.append("    Compute a result from the input value.")
-            lines.append("")
-            lines.append("    Args:")
-            lines.append("        value: The input integer value")
-            lines.append("")
-            lines.append("    Returns:")
-            lines.append("        The computed result")
-            lines.append("    \"\"\"")
-            lines.append("    multiplier = 2")
-            lines.append("    offset = 10")
-            lines.append("    result = value * multiplier")
-            lines.append("")
-            lines.append("    if result > 100:")
-            lines.append("        result = result - offset")
-            lines.append("    else:")
-            lines.append("        result = result + offset")
-            lines.append("")
-            lines.append("    message = f\"Result: {result}\"")
-            lines.append("    print(message)")
-            lines.append("")
-            lines.append("    return result")
-            lines.append("")
-            lines.append("")
-
-            currentLine += 25
-            functionIndex += 1
-        }
-
-        return lines.joined(separator: "\n")
+        generateCode(using: pythonTemplate, lineCount: lineCount)
     }
 
     /// 生成指定行数的 JavaScript 代码
-    /// - Parameter lineCount: 目标行数
-    /// - Returns: 生成的 JavaScript 代码字符串
     private func generateJavaScriptCode(lineCount: Int) -> String {
-        var lines: [String] = []
-        lines.append("// Generated JavaScript module for performance testing")
-        lines.append("")
-        lines.append("const MODULE_NAME = 'PerformanceTest';")
-        lines.append("")
-
-        var currentLine = 4
-        var functionIndex = 0
-
-        while currentLine < lineCount {
-            let functionName = "function\(functionIndex)"
-            lines.append("/**")
-            lines.append(" * Compute a result from the input value.")
-            lines.append(" * @param {number} value - The input value")
-            lines.append(" * @returns {number} The computed result")
-            lines.append(" */")
-            lines.append("function \(functionName)(value) {")
-            lines.append("    const multiplier = 2;")
-            lines.append("    const offset = 10;")
-            lines.append("    let result = value * multiplier;")
-            lines.append("")
-            lines.append("    if (result > 100) {")
-            lines.append("        result = result - offset;")
-            lines.append("    } else {")
-            lines.append("        result = result + offset;")
-            lines.append("    }")
-            lines.append("")
-            lines.append("    const message = `Result: ${result}`;")
-            lines.append("    console.log(message);")
-            lines.append("")
-            lines.append("    return result;")
-            lines.append("}")
-            lines.append("")
-
-            currentLine += 22
-            functionIndex += 1
-        }
-
-        return lines.joined(separator: "\n")
+        generateCode(using: javaScriptTemplate, lineCount: lineCount)
     }
 
     // MARK: - Code Generation Tests
