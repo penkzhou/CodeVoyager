@@ -21,7 +21,7 @@ let package = Package(
         // Syntax Highlighting - Core
         .package(url: "https://github.com/krzyzanowskim/STTextView.git", from: "2.3.4"),
         .package(url: "https://github.com/ChimeHQ/Neon.git", exact: "0.6.0"),
-        .package(url: "https://github.com/ChimeHQ/SwiftTreeSitter.git", exact: "0.8.0"),
+        .package(url: "https://github.com/ChimeHQ/SwiftTreeSitter.git", exact: "0.25.0"),
 
         // Tree-sitter Language Grammars (consolidated package with all supported languages)
         .package(url: "https://github.com/simonbs/TreeSitterLanguages.git", from: "0.1.10"),
