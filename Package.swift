@@ -19,7 +19,7 @@ let package = Package(
         .package(url: "https://github.com/groue/GRDB.swift.git", from: "6.0.0"),
 
         // Syntax Highlighting - Core
-        .package(url: "https://github.com/krzyzanowskim/STTextView.git", from: "0.9.0"),
+        .package(url: "https://github.com/krzyzanowskim/STTextView.git", from: "0.9.6"),
         .package(url: "https://github.com/ChimeHQ/Neon.git", exact: "0.5.1"),
         .package(url: "https://github.com/ChimeHQ/SwiftTreeSitter.git", .upToNextMinor(from: "0.7.1")),
 
