@@ -176,11 +176,18 @@ final class LargeFilePerformanceTests: XCTestCase {
     }
 
     /// 测试行数统计性能 - 使用 UTF8 直接计数
+    ///
+    /// Note: 此算法假设非空内容至少有 1 行，每个换行符增加 1 行。
+    /// 这与 FileContent.calculateLineCount 的行为略有不同：
+    /// - FileContent: 空字符串返回 0，trailing newline 不增加行数
+    /// - 此算法: 空字符串返回 1，trailing newline 会增加行数
+    /// 此处主要用于性能基准对比，而非精确的行数计算。
     func testLineCount_UTF8_10000Lines() throws {
         let content = generateSwiftCode(lineCount: 10_000)
 
         measure {
-            var count = 1 // 至少一行
+            // 假设非空内容至少有 1 行，每个换行符增加 1 行
+            var count = 1
             for byte in content.utf8 where byte == 0x0A {  // '\n'
                 count += 1
             }
@@ -291,17 +298,30 @@ final class LanguageConfigurationPerformanceTests: XCTestCase {
     func testConfigurationLoad_ColdStart() throws {
         measure {
             registry.clearCache()
-            _ = try? registry.configuration(for: .swift)
+            do {
+                _ = try registry.configuration(for: .swift)
+            } catch {
+                XCTFail("Configuration load failed: \(error.localizedDescription)")
+            }
         }
     }
 
     /// 测试语言配置缓存命中性能（热启动）
     func testConfigurationLoad_CacheHit() throws {
         // 预热缓存
-        _ = try? registry.configuration(for: .swift)
+        do {
+            _ = try registry.configuration(for: .swift)
+        } catch {
+            XCTFail("Cache warmup failed: \(error.localizedDescription)")
+            return
+        }
 
         measure {
-            _ = try? registry.configuration(for: .swift)
+            do {
+                _ = try registry.configuration(for: .swift)
+            } catch {
+                XCTFail("Configuration load failed: \(error.localizedDescription)")
+            }
         }
     }
 
@@ -320,7 +340,11 @@ final class LanguageConfigurationPerformanceTests: XCTestCase {
         measure {
             registry.clearCache()
             for language in languages {
-                _ = try? registry.configuration(for: language)
+                do {
+                    _ = try registry.configuration(for: language)
+                } catch {
+                    XCTFail("Configuration load for \(language) failed: \(error.localizedDescription)")
+                }
             }
         }
     }
@@ -392,15 +416,20 @@ final class FileContentProcessingPerformanceTests: XCTestCase {
 
     // MARK: - NSRange Conversion
 
-    /// 测试 NSRange 转换性能
+    /// 测试 Range<String.Index> 到 NSRange 转换性能
+    ///
+    /// 此转换在 Neon/Tree-sitter 高亮集成中频繁使用
     func testNSRangeConversion_10000Lines() throws {
         let content = generateContent(lineCount: 10_000)
-        let nsString = content as NSString
 
         measure {
-            // 模拟随机范围转换
-            for i in stride(from: 0, to: min(1000, nsString.length - 100), by: 100) {
-                _ = NSRange(location: i, length: 50)
+            // 测试真正的 Range<String.Index> 到 NSRange 转换
+            for i in stride(from: 0, to: min(1000, content.count - 100), by: 100) {
+                let startIndex = content.index(content.startIndex, offsetBy: i)
+                let endIndex = content.index(startIndex, offsetBy: 50)
+                let range = startIndex..<endIndex
+                // 这是实际的转换操作
+                _ = NSRange(range, in: content)
             }
         }
     }
@@ -439,7 +468,9 @@ final class FileTreePerformanceTests: XCTestCase {
         return createNode(name: "root", depth: depth, isDirectory: true)
     }
 
-    /// 测试文件树遍历性能 - 小型项目（约 100 个节点）
+    /// 测试文件树遍历性能 - 小型项目（约 30 个节点）
+    ///
+    /// 参数: depth=3, breadth=4，实际生成 29 个节点
     func testFileTreeTraversal_SmallProject() throws {
         let root = createMockFileTree(depth: 3, breadth: 4)
 
@@ -448,7 +479,9 @@ final class FileTreePerformanceTests: XCTestCase {
         }
     }
 
-    /// 测试文件树遍历性能 - 中型项目（约 1000 个节点）
+    /// 测试文件树遍历性能 - 中型项目（约 250 个节点）
+    ///
+    /// 参数: depth=4, breadth=6，实际生成 241 个节点
     func testFileTreeTraversal_MediumProject() throws {
         let root = createMockFileTree(depth: 4, breadth: 6)
 
@@ -457,9 +490,11 @@ final class FileTreePerformanceTests: XCTestCase {
         }
     }
 
-    /// 测试文件树遍历性能 - 大型项目（约 5000 个节点）
+    /// 测试文件树遍历性能 - 大型项目（约 2200 个节点）
+    ///
+    /// 参数: depth=6, breadth=6，实际生成 2185 个节点
     func testFileTreeTraversal_LargeProject() throws {
-        let root = createMockFileTree(depth: 5, breadth: 6)
+        let root = createMockFileTree(depth: 6, breadth: 6)
 
         measure {
             _ = countNodes(root)
