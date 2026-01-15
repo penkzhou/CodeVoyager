@@ -27,7 +27,6 @@ Carthage/Build
 # Swift Package Manager
 .build/
 .swiftpm/
-Package.resolved
 
 # fastlane
 fastlane/report.xml
