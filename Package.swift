@@ -24,7 +24,7 @@ let package = Package(
         .package(url: "https://github.com/ChimeHQ/SwiftTreeSitter.git", .upToNextMinor(from: "0.7.1")),
 
         // Tree-sitter Language Grammars (consolidated package with all supported languages)
-        .package(url: "https://github.com/simonbs/TreeSitterLanguages.git", from: "0.1.0"),
+        .package(url: "https://github.com/simonbs/TreeSitterLanguages.git", from: "0.1.10"),
     ],
     targets: [
         .executableTarget(
