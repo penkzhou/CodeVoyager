@@ -251,6 +251,9 @@ public enum CaptureNames {
     /// 字符串中的特殊字符（如转义序列）
     public static let stringSpecial = "string.special"
 
+    /// 字符串转义
+    public static let stringEscape = "string.escape"
+
     /// 数字
     public static let number = "number"
 
@@ -281,6 +284,9 @@ public enum CaptureNames {
 
     /// 括号
     public static let punctuationBracket = "punctuation.bracket"
+
+    /// 特殊标点
+    public static let punctuationSpecial = "punctuation.special"
 
     // MARK: - Operators
 
@@ -321,4 +327,22 @@ public enum CaptureNames {
 
     /// 列表
     public static let markupList = "markup.list"
+
+    /// 标题（text capture）
+    public static let textTitle = "text.title"
+
+    /// 代码或字面量（text capture）
+    public static let textLiteral = "text.literal"
+
+    /// 链接（text capture）
+    public static let textURI = "text.uri"
+
+    /// 引用（text capture）
+    public static let textReference = "text.reference"
+
+    /// 斜体（text capture）
+    public static let textEmphasis = "text.emphasis"
+
+    /// 粗体（text capture）
+    public static let textStrong = "text.strong"
 }

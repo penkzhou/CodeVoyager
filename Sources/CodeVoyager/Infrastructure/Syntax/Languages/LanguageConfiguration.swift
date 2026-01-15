@@ -64,7 +64,7 @@ public enum LanguageConfigurationError: Error, LocalizedError {
 ///     // 降级：显示无高亮的纯文本
 /// }
 /// ```
-public struct SyntaxLanguageConfiguration: Sendable {
+public struct SyntaxLanguageConfiguration {
     private static let logger = Logger(subsystem: "CodeVoyager", category: "SyntaxLanguageConfiguration")
     /// 对应的支持语言
     public let language: SupportedLanguage
@@ -126,37 +126,120 @@ public struct SyntaxLanguageConfiguration: Sendable {
     }
 
     /// 加载高亮 Query
-    /// TreeSitterLanguages 包会将 queries 包含在各自的 Queries bundle 中
     ///
     /// - Note: 如果加载失败，返回 nil 并记录警告日志。语法高亮将降级为无高亮模式。
     private static func loadHighlightsQuery(for language: SupportedLanguage, tsLanguage: Language) -> SwiftTreeSitter.Query? {
-        guard let queryURL = getHighlightsQueryURL(for: language) else {
-            logger.warning("Highlights query URL not found for \(language.displayName). Syntax highlighting will be disabled for this language.")
+        let queryURLs = highlightsQueryURLs(for: language)
+        guard !queryURLs.isEmpty else {
+            logger.warning(
+                "Highlights query URL not found for \(language.displayName, privacy: .public). Syntax highlighting will be disabled for this language."
+            )
             return nil
         }
 
         do {
-            return try tsLanguage.query(contentsOf: queryURL)
+            let query = try buildHighlightsQuery(from: queryURLs, tsLanguage: tsLanguage, language: language)
+            return query
         } catch {
             // 降级行为：返回 nil，语法高亮将不可用，但代码编辑功能正常
-            logger.warning("Failed to load highlights query for \(language.displayName): \(error.localizedDescription). Syntax highlighting will be disabled for this language.")
+            logger.warning(
+                "Failed to load highlights query for \(language.displayName, privacy: .public): \(error.localizedDescription, privacy: .public). Syntax highlighting will be disabled for this language."
+            )
             return nil
         }
     }
 
-    /// 获取高亮 Query 文件的 URL
-    private static func getHighlightsQueryURL(for language: SupportedLanguage) -> URL? {
-        let queryFileName = "highlights"
+    private static func buildHighlightsQuery(
+        from queryURLs: [URL],
+        tsLanguage: Language,
+        language: SupportedLanguage
+    ) throws -> SwiftTreeSitter.Query {
+        var combinedData = Data()
+        var includedURLs: [URL] = []
 
-        // 尝试在主 bundle 中查找资源 bundle
-        guard let resourceBundleURL = Bundle.main.url(forResource: language.queriesBundleName, withExtension: "bundle"),
-              let resourceBundle = Bundle(url: resourceBundleURL) else {
-            // 回退：直接在主 bundle 中查找
-            logger.debug("Resource bundle '\(language.queriesBundleName)' not found, falling back to main bundle for \(language.displayName)")
-            return Bundle.main.url(forResource: queryFileName, withExtension: "scm")
+        for url in queryURLs {
+            let data: Data
+            do {
+                data = try Data(contentsOf: url)
+            } catch {
+                logger.warning(
+                    "Failed to read highlights query \(url.lastPathComponent, privacy: .public) for \(language.displayName, privacy: .public): \(error.localizedDescription, privacy: .public)"
+                )
+                continue
+            }
+
+            var candidate = combinedData
+            if !candidate.isEmpty {
+                candidate.append(0x0A)
+            }
+            candidate.append(data)
+
+            do {
+                _ = try SwiftTreeSitter.Query(language: tsLanguage, data: candidate)
+                combinedData = candidate
+                includedURLs.append(url)
+            } catch {
+                logger.warning(
+                    "Skipping highlights query \(url.lastPathComponent, privacy: .public) for \(language.displayName, privacy: .public): \(error.localizedDescription, privacy: .public)"
+                )
+            }
         }
 
-        return resourceBundle.url(forResource: queryFileName, withExtension: "scm")
+        guard !combinedData.isEmpty else {
+            throw LanguageConfigurationError.queryLoadFailed(language, underlying: QueryLoadError.noValidQuery)
+        }
+
+        if includedURLs.count < queryURLs.count {
+            let skippedCount = queryURLs.count - includedURLs.count
+            logger.warning(
+                "Loaded highlights for \(language.displayName, privacy: .public) with \(skippedCount, privacy: .public) query file(s) skipped due to incompatibility."
+            )
+        }
+
+        return try SwiftTreeSitter.Query(language: tsLanguage, data: combinedData)
+    }
+
+    private enum QueryLoadError: LocalizedError {
+        case noValidQuery
+
+        var errorDescription: String? {
+            switch self {
+            case .noValidQuery:
+                return "No compatible highlights query could be loaded"
+            }
+        }
+    }
+
+    private static func highlightsQueryURLs(for language: SupportedLanguage) -> [URL] {
+        switch language {
+        case .swift:
+            return [TreeSitterSwiftQueries.Query.highlightsFileURL]
+        case .javascript:
+            return [
+                TreeSitterJavaScriptQueries.Query.highlightsFileURL,
+                TreeSitterJavaScriptQueries.Query.highlightsParamsFileURL,
+                TreeSitterJavaScriptQueries.Query.highlightsJSXFileURL
+            ]
+        case .typescript:
+            return [
+                TreeSitterJavaScriptQueries.Query.highlightsFileURL,
+                TreeSitterJavaScriptQueries.Query.highlightsParamsFileURL,
+                TreeSitterTypeScriptQueries.Query.highlightsFileURL
+            ]
+        case .tsx:
+            return [
+                TreeSitterJavaScriptQueries.Query.highlightsFileURL,
+                TreeSitterJavaScriptQueries.Query.highlightsParamsFileURL,
+                TreeSitterJavaScriptQueries.Query.highlightsJSXFileURL,
+                TreeSitterTSXQueries.Query.highlightsFileURL
+            ]
+        case .python:
+            return [TreeSitterPythonQueries.Query.highlightsFileURL]
+        case .json:
+            return [TreeSitterJSONQueries.Query.highlightsFileURL]
+        case .markdown:
+            return [TreeSitterMarkdownQueries.Query.highlightsFileURL]
+        }
     }
 
     // MARK: - Internal Initialization

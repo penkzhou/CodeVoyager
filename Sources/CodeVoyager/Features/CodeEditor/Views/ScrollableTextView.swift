@@ -1,9 +1,14 @@
 import AppKit
 import SwiftUI
 import STTextView
-import STTextViewUI
+import STTextViewSwiftUI
+import Neon
 
-/// A text view wrapper that supports scroll position persistence.
+/// Callback type for when the text view is created.
+/// Used to set up syntax highlighting after the view is available.
+typealias TextViewCreatedCallback = (STTextView) -> Void
+
+/// A text view wrapper that supports scroll position persistence and syntax highlighting.
 /// Wraps STTextView with additional scroll position management capabilities.
 struct ScrollableTextView: NSViewRepresentable {
     @Binding var text: AttributedString
@@ -16,42 +21,59 @@ struct ScrollableTextView: NSViewRepresentable {
     /// Font to use for the text view.
     let font: NSFont
 
+    /// Optional callback when the text view is created.
+    /// Used for syntax highlighting setup.
+    let onTextViewCreated: TextViewCreatedCallback?
+
+    /// Optional callback when visible content changes (scroll).
+    let onVisibleContentChanged: (() -> Void)?
+
     init(
         text: Binding<AttributedString>,
         scrollOffset: Binding<CGFloat>,
         scrollToTopOnContentChange: Bool = true,
-        font: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular)
+        font: NSFont = .monospacedSystemFont(ofSize: 13, weight: .regular),
+        onTextViewCreated: TextViewCreatedCallback? = nil,
+        onVisibleContentChanged: (() -> Void)? = nil
     ) {
         self._text = text
         self._scrollOffset = scrollOffset
         self.scrollToTopOnContentChange = scrollToTopOnContentChange
         self.font = font
+        self.onTextViewCreated = onTextViewCreated
+        self.onVisibleContentChanged = onVisibleContentChanged
     }
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = STTextView.scrollableTextView()
         let textView = scrollView.documentView as! STTextView
 
+        // Store reference in coordinator for callbacks
+        context.coordinator.textView = textView
+
         // Configure text view
         textView.isEditable = false
         textView.isSelectable = true
-        textView.widthTracksTextView = true
+        textView.isHorizontallyResizable = false  // Renamed from widthTracksTextView
         textView.highlightSelectedLine = false
         textView.font = font
 
         // Set initial text
         context.coordinator.isUpdating = true
-        textView.setAttributedString(NSAttributedString(text))
+        textView.attributedText = NSAttributedString(text)
         context.coordinator.isUpdating = false
 
         // Set selection to beginning to prevent STTextView from scrolling to end
-        textView.setSelectedRange(NSRange(location: 0, length: 0))
+        textView.selectAndShow(NSRange(location: 0, length: 0))
 
         // Scroll to top initially
         scrollToTop(scrollView, textView: textView)
 
         // Observe scroll position changes
         context.coordinator.observeScroll(scrollView: scrollView)
+
+        // Notify callback that text view is created
+        onTextViewCreated?(textView)
 
         return scrollView
     }
@@ -65,11 +87,11 @@ struct ScrollableTextView: NSViewRepresentable {
 
         if currentTextString != newTextString {
             context.coordinator.isUpdating = true
-            textView.setAttributedString(NSAttributedString(text))
+            textView.attributedText = NSAttributedString(text)
             context.coordinator.isUpdating = false
 
             // Set selection to beginning to prevent STTextView from scrolling to end
-            textView.setSelectedRange(NSRange(location: 0, length: 0))
+            textView.selectAndShow(NSRange(location: 0, length: 0))
 
             if scrollToTopOnContentChange {
                 // Scroll to top when content changes (new file opened)
@@ -115,6 +137,7 @@ struct ScrollableTextView: NSViewRepresentable {
     class Coordinator: NSObject {
         var parent: ScrollableTextView
         var isUpdating = false
+        weak var textView: STTextView?
         private var scrollObserver: NSObjectProtocol?
 
         init(parent: ScrollableTextView) {
@@ -149,6 +172,9 @@ struct ScrollableTextView: NSViewRepresentable {
                 if self.parent.scrollOffset != newOffset {
                     self.parent.scrollOffset = newOffset
                 }
+
+                // Notify of visible content change
+                self.parent.onVisibleContentChanged?()
             }
 
             // Enable bounds change notifications
