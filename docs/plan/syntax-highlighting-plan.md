@@ -484,15 +484,16 @@ Query 加载逻辑已在 `LanguageConfiguration.swift` 中实现。
 
 ### 优先级 1: 可选优化
 
-1. **磁盘缓存** (`Services/Syntax/HighlightCache.swift`)
-   - 解析树序列化到磁盘
-   - 应用重启后可复用缓存
-   - 校验文件修改时间戳决定是否使用缓存
-
-2. **大文件性能测试**
+1. **大文件性能测试**
    - 动态生成 10000+ 行测试文件
    - 验证滚动流畅性
    - 验证内存占用 < 200MB
+
+2. **磁盘缓存** (`Services/Syntax/HighlightCache.swift`) - ⚠️ 低优先级
+   - ❓ TreeSitterClient 不暴露解析树序列化 API
+   - ❓ 解析速度已足够快（几千行代码 < 100ms）
+   - ❓ LRU 内存缓存已覆盖常用场景
+   - 若需实现：考虑缓存"文件哈希+解析时间"而非完整解析树
 
 ### 优先级 2: 用户体验增强
 
