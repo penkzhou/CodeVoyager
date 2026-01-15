@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 import STTextView
-import STTextViewUI
+import STTextViewSwiftUI
 import os.log
 
 /// A text view with integrated syntax highlighting.

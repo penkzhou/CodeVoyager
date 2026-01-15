@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 import STTextView
-import STTextViewUI
+import STTextViewSwiftUI
 import Neon
 
 /// Callback type for when the text view is created.

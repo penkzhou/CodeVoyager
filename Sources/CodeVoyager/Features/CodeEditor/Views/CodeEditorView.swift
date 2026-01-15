@@ -1,6 +1,6 @@
 import AppKit
 import SwiftUI
-import STTextViewUI
+import STTextViewSwiftUI
 
 /// Code editor view for displaying file contents with syntax highlighting.
 /// Uses STTextView (TextKit 2) for high-performance text rendering.
