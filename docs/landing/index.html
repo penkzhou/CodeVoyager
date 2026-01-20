@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeVoyager - Native macOS Code Reader</title>
+    <meta name="description" content="A blazing-fast native macOS application for code reading and Git visualization. Built with SwiftUI for exceptional performance.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <span class="logo-icon">◈</span>
+                <span class="logo-text">CodeVoyager</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#performance">Performance</a>
+                <a href="#install">Install</a>
+                <a href="https://github.com/penkzhou/CodeVoyager" target="_blank" rel="noopener" class="nav-github">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg">
+            <div class="hero-gradient"></div>
+            <div class="hero-grid"></div>
+        </div>
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="badge-dot"></span>
+                Native macOS App
+            </div>
+            <h1 class="hero-title">
+                Read Code.<br>
+                <span class="text-gradient">Beautifully.</span>
+            </h1>
+            <p class="hero-subtitle">
+                A blazing-fast native macOS application for code reading and Git visualization.
+                Built with SwiftUI for exceptional performance and minimal memory footprint.
+            </p>
+            <div class="hero-actions">
+                <a href="#" class="btn btn-primary" id="download-btn">
+                    <span class="btn-icon">↓</span>
+                    <span class="btn-text">
+                        <span class="btn-label">Download</span>
+                        <span class="btn-version" id="download-version">Loading...</span>
+                    </span>
+                </a>
+                <a href="https://github.com/penkzhou/CodeVoyager" target="_blank" rel="noopener" class="btn btn-secondary">
+                    <span>View on GitHub</span>
+                    <span class="btn-arrow">→</span>
+                </a>
+            </div>
+            <div class="hero-meta">
+                <span class="meta-item">
+                    <span class="meta-icon">◉</span>
+                    macOS 14+
+                </span>
+                <span class="meta-divider">·</span>
+                <span class="meta-item">
+                    <span class="meta-icon">◉</span>
+                    Apple Silicon Native
+                </span>
+                <span class="meta-divider">·</span>
+                <span class="meta-item">
+                    <span class="meta-icon">◉</span>
+                    Signed & Notarized
+                </span>
+            </div>
+        </div>
+
+        <!-- Hero Visual -->
+        <div class="hero-visual">
+            <div class="editor-window">
+                <div class="editor-titlebar">
+                    <div class="titlebar-buttons">
+                        <span class="btn-close"></span>
+                        <span class="btn-minimize"></span>
+                        <span class="btn-maximize"></span>
+                    </div>
+                    <div class="titlebar-title">ContentView.swift — CodeVoyager</div>
+                </div>
+                <div class="editor-content">
+                    <div class="editor-sidebar">
+                        <div class="sidebar-item active">
+                            <span class="folder-icon">▶</span> Sources
+                        </div>
+                        <div class="sidebar-item nested">
+                            <span class="file-icon swift"></span> App.swift
+                        </div>
+                        <div class="sidebar-item nested active-file">
+                            <span class="file-icon swift"></span> ContentView.swift
+                        </div>
+                        <div class="sidebar-item nested">
+                            <span class="file-icon swift"></span> ViewModel.swift
+                        </div>
+                        <div class="sidebar-item">
+                            <span class="folder-icon">▶</span> Resources
+                        </div>
+                    </div>
+                    <div class="editor-code">
+                        <div class="code-line"><span class="line-num">1</span><span class="keyword">import</span> <span class="type">SwiftUI</span></div>
+                        <div class="code-line"><span class="line-num">2</span></div>
+                        <div class="code-line"><span class="line-num">3</span><span class="keyword">struct</span> <span class="type">ContentView</span>: <span class="type">View</span> {</div>
+                        <div class="code-line"><span class="line-num">4</span>    <span class="keyword">@State</span> <span class="keyword">private var</span> <span class="variable">isLoading</span> = <span class="literal">false</span></div>
+                        <div class="code-line"><span class="line-num">5</span>    </div>
+                        <div class="code-line"><span class="line-num">6</span>    <span class="keyword">var</span> <span class="variable">body</span>: <span class="keyword">some</span> <span class="type">View</span> {</div>
+                        <div class="code-line"><span class="line-num">7</span>        <span class="type">NavigationSplitView</span> {</div>
+                        <div class="code-line"><span class="line-num">8</span>            <span class="type">FileTreeView</span>()</div>
+                        <div class="code-line"><span class="line-num">9</span>        } <span class="variable">detail</span>: {</div>
+                        <div class="code-line"><span class="line-num">10</span>            <span class="type">CodeEditorView</span>()</div>
+                        <div class="code-line"><span class="line-num">11</span>        }</div>
+                        <div class="code-line"><span class="line-num">12</span>    }</div>
+                        <div class="code-line"><span class="line-num">13</span>}</div>
+                        <div class="code-cursor"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Features</span>
+                <h2 class="section-title">Everything you need.<br>Nothing you don't.</h2>
+                <p class="section-subtitle">
+                    Purpose-built for code exploration with the tools that matter most.
+                </p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card feature-highlight">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Tree-sitter Syntax Highlighting</h3>
+                    <p class="feature-desc">
+                        Incremental parsing delivers instant, accurate highlighting even in massive files.
+                        Every token precisely identified.
+                    </p>
+                    <div class="feature-badge">Core Feature</div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Native Git Integration</h3>
+                    <p class="feature-desc">
+                        Browse commits, view diffs, and explore branch history with a beautiful native interface.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Smart File Browser</h3>
+                    <p class="feature-desc">
+                        Lazy-loaded file tree with instant search. Navigate codebases of any size effortlessly.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Side-by-Side Diff</h3>
+                    <p class="feature-desc">
+                        Compare changes with unified or split diff views. Syntax highlighting preserved.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Git Blame</h3>
+                    <p class="feature-desc">
+                        See who changed what and when. Navigate commit history with inline annotations.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Customizable Themes</h3>
+                    <p class="feature-desc">
+                        Light and dark modes with carefully crafted syntax themes. Easy on the eyes.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Performance Section -->
+    <section class="performance" id="performance">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Performance</span>
+                <h2 class="section-title">Native speed.<br>No compromises.</h2>
+                <p class="section-subtitle">
+                    Built from the ground up in Swift. Not another Electron wrapper.
+                </p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">
+                        <span class="stat-prefix">&lt;</span>200<span class="stat-unit">MB</span>
+                    </div>
+                    <div class="stat-label">Memory Usage</div>
+                    <div class="stat-desc">Lightweight footprint for normal usage</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-value">
+                        <span class="stat-prefix">&lt;</span>2<span class="stat-unit">sec</span>
+                    </div>
+                    <div class="stat-label">Cold Start</div>
+                    <div class="stat-desc">Ready to code instantly</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-value">
+                        10K<span class="stat-unit">+</span>
+                    </div>
+                    <div class="stat-label">Lines Smooth</div>
+                    <div class="stat-desc">Large files scroll butter-smooth</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-value">
+                        <span class="stat-prefix">∞</span>
+                    </div>
+                    <div class="stat-label">Native APIs</div>
+                    <div class="stat-desc">Full macOS integration</div>
+                </div>
+            </div>
+
+            <div class="comparison">
+                <div class="comparison-header">
+                    <h3>Why Native Matters</h3>
+                </div>
+                <div class="comparison-content">
+                    <div class="comparison-item native">
+                        <div class="comparison-label">
+                            <span class="comparison-icon">◈</span>
+                            CodeVoyager (Native)
+                        </div>
+                        <div class="comparison-bar">
+                            <div class="bar-fill" style="--width: 15%"></div>
+                            <span class="bar-value">~150MB</span>
+                        </div>
+                    </div>
+                    <div class="comparison-item electron">
+                        <div class="comparison-label">
+                            <span class="comparison-icon">○</span>
+                            Typical Electron App
+                        </div>
+                        <div class="comparison-bar">
+                            <div class="bar-fill" style="--width: 80%"></div>
+                            <span class="bar-value">~800MB</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Install Section -->
+    <section class="install" id="install">
+        <div class="section-container">
+            <div class="section-header">
+                <span class="section-tag">Installation</span>
+                <h2 class="section-title">Get started in seconds.</h2>
+            </div>
+
+            <div class="install-steps">
+                <div class="install-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Download</h4>
+                        <p>Click the download button to get the latest DMG file.</p>
+                    </div>
+                </div>
+                <div class="install-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Install</h4>
+                        <p>Open the DMG and drag CodeVoyager to Applications.</p>
+                    </div>
+                </div>
+                <div class="install-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Launch</h4>
+                        <p>Open CodeVoyager and start exploring your code.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="install-note">
+                <div class="note-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                </div>
+                <div class="note-content">
+                    <h4>Signed & Notarized</h4>
+                    <p>
+                        CodeVoyager is signed with an Apple Developer ID certificate and notarized by Apple,
+                        ensuring it meets Apple's security requirements and runs without Gatekeeper warnings.
+                    </p>
+                </div>
+            </div>
+
+            <div class="install-cta">
+                <a href="#" class="btn btn-primary btn-large" id="download-btn-footer">
+                    <span class="btn-icon">↓</span>
+                    <span class="btn-text">
+                        <span class="btn-label">Download CodeVoyager</span>
+                        <span class="btn-version" id="download-version-footer">Loading...</span>
+                    </span>
+                </a>
+                <p class="cta-meta">
+                    Requires macOS 14 Sonoma or later
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <span class="logo-icon">◈</span>
+                <span class="logo-text">CodeVoyager</span>
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/penkzhou/CodeVoyager" target="_blank" rel="noopener">GitHub</a>
+                <a href="https://github.com/penkzhou/CodeVoyager/issues" target="_blank" rel="noopener">Issues</a>
+                <a href="https://github.com/penkzhou/CodeVoyager/releases" target="_blank" rel="noopener">Releases</a>
+            </div>
+            <div class="footer-copy">
+                <p>Made with Swift & SwiftUI</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
