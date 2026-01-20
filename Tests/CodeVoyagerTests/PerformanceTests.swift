@@ -278,7 +278,6 @@ final class LanguageDetectionPerformanceTests: XCTestCase {
 
 // MARK: - Language Configuration Performance Tests
 
-@MainActor
 final class LanguageConfigurationPerformanceTests: XCTestCase {
 
     private var registry: LanguageRegistry!
