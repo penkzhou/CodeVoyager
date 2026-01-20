@@ -138,7 +138,7 @@ struct ScrollableTextView: NSViewRepresentable {
         var parent: ScrollableTextView
         var isUpdating = false
         weak var textView: STTextView?
-        private var scrollObserver: NSObjectProtocol?
+        private weak var observedContentView: NSClipView?
 
         init(parent: ScrollableTextView) {
             self.parent = parent
@@ -146,39 +146,53 @@ struct ScrollableTextView: NSViewRepresentable {
         }
 
         deinit {
-            if let observer = scrollObserver {
-                NotificationCenter.default.removeObserver(observer)
+            if let observedContentView {
+                NotificationCenter.default.removeObserver(
+                    self,
+                    name: NSView.boundsDidChangeNotification,
+                    object: observedContentView
+                )
             }
         }
 
+        @MainActor
         func observeScroll(scrollView: NSScrollView) {
             // Remove any existing observer
-            if let observer = scrollObserver {
-                NotificationCenter.default.removeObserver(observer)
+            if let observedContentView {
+                NotificationCenter.default.removeObserver(
+                    self,
+                    name: NSView.boundsDidChangeNotification,
+                    object: observedContentView
+                )
             }
 
             // Observe bounds changes of the clip view (scroll events)
-            scrollObserver = NotificationCenter.default.addObserver(
-                forName: NSView.boundsDidChangeNotification,
-                object: scrollView.contentView,
-                queue: .main
-            ) { [weak self] notification in
-                guard let self = self,
-                      !self.isUpdating,
-                      let clipView = notification.object as? NSClipView else { return }
-
-                // Update the scroll offset binding
-                let newOffset = clipView.bounds.origin.y
-                if self.parent.scrollOffset != newOffset {
-                    self.parent.scrollOffset = newOffset
-                }
-
-                // Notify of visible content change
-                self.parent.onVisibleContentChanged?()
-            }
+            let contentView = scrollView.contentView
+            observedContentView = contentView
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleBoundsDidChange(_:)),
+                name: NSView.boundsDidChangeNotification,
+                object: contentView
+            )
 
             // Enable bounds change notifications
-            scrollView.contentView.postsBoundsChangedNotifications = true
+            contentView.postsBoundsChangedNotifications = true
+        }
+
+        @MainActor
+        @objc private func handleBoundsDidChange(_ notification: Notification) {
+            guard !isUpdating,
+                  let clipView = notification.object as? NSClipView else { return }
+
+            // Update the scroll offset binding
+            let newOffset = clipView.bounds.origin.y
+            if parent.scrollOffset != newOffset {
+                parent.scrollOffset = newOffset
+            }
+
+            // Notify of visible content change
+            parent.onVisibleContentChanged?()
         }
     }
 }

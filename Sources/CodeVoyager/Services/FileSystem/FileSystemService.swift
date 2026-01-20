@@ -3,7 +3,14 @@ import os.log
 
 /// Concrete implementation of FileSystemServiceProtocol.
 /// Handles all file system operations including directory traversal and file reading.
-final class FileSystemService: FileSystemServiceProtocol {
+///
+/// ## Thread Safety
+/// 此类符合 `Sendable`，因为：
+/// - `FileManager.default` 是线程安全的
+/// - `Logger` 是线程安全的
+/// - 所有存储属性都是不可变的（let）
+/// - `Process` 调用是独立的，不共享状态
+final class FileSystemService: FileSystemServiceProtocol, @unchecked Sendable {
     // MARK: - Properties
 
     private let fileManager = FileManager.default

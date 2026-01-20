@@ -216,7 +216,7 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
         var currentContent: String = ""
         var currentFileURL: URL?
 
-        private var scrollObserver: NSObjectProtocol?
+        private weak var observedContentView: NSClipView?
         private var highlightingSession: HighlightingSession?
         private var highlightingService: SyntaxHighlightingServiceProtocol?
 
@@ -226,39 +226,49 @@ struct SyntaxHighlightedTextView: NSViewRepresentable {
         }
 
         deinit {
-            if let observer = scrollObserver {
-                NotificationCenter.default.removeObserver(observer)
+            if let observedContentView {
+                NotificationCenter.default.removeObserver(
+                    self,
+                    name: NSView.boundsDidChangeNotification,
+                    object: observedContentView
+                )
             }
         }
 
+        @MainActor
         func observeScroll(scrollView: NSScrollView) {
-            if let observer = scrollObserver {
-                NotificationCenter.default.removeObserver(observer)
+            if let observedContentView {
+                NotificationCenter.default.removeObserver(
+                    self,
+                    name: NSView.boundsDidChangeNotification,
+                    object: observedContentView
+                )
             }
 
-            scrollObserver = NotificationCenter.default.addObserver(
-                forName: NSView.boundsDidChangeNotification,
-                object: scrollView.contentView,
-                queue: .main
-            ) { [weak self] notification in
-                guard let self = self,
-                      !self.isUpdating,
-                      let clipView = notification.object as? NSClipView else { return }
+            let contentView = scrollView.contentView
+            observedContentView = contentView
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleBoundsDidChange(_:)),
+                name: NSView.boundsDidChangeNotification,
+                object: contentView
+            )
 
-                let newOffset = clipView.bounds.origin.y
-                if self.parent.scrollOffset != newOffset {
-                    self.parent.scrollOffset = newOffset
-                }
+            contentView.postsBoundsChangedNotifications = true
+        }
 
-                // Notify highlighter of visible content change
-                if let highlightingSession = self.highlightingSession {
-                    Task { @MainActor in
-                        highlightingSession.visibleContentDidChange()
-                    }
-                }
+        @MainActor
+        @objc private func handleBoundsDidChange(_ notification: Notification) {
+            guard !isUpdating,
+                  let clipView = notification.object as? NSClipView else { return }
+
+            let newOffset = clipView.bounds.origin.y
+            if parent.scrollOffset != newOffset {
+                parent.scrollOffset = newOffset
             }
 
-            scrollView.contentView.postsBoundsChangedNotifications = true
+            // Notify highlighter of visible content change
+            highlightingSession?.visibleContentDidChange()
         }
 
         @MainActor

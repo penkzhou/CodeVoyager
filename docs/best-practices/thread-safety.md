@@ -140,6 +140,46 @@ func performBackgroundWork() async {
 }
 ```
 
+## NotificationCenter + NSViewRepresentable
+
+### 常见报错
+
+- `main actor-isolated property ... can not be referenced from a Sendable closure`
+- `main actor-isolated property ... can not be mutated from a nonisolated context`
+
+### 原因
+
+`NotificationCenter.addObserver` 的闭包是 `@Sendable`，即使设置了 `.main` 队列，编译器也不会认为它自动在 `MainActor` 上执行。AppKit 的 `NSView`/`NSScrollView` 等 API 都是 `@MainActor` 隔离的，直接在闭包里访问就会触发并发错误。
+
+### ✅ 推荐
+
+在 `Coordinator`（继承 `NSObject`）中优先使用 selector 形式，避免 `@Sendable` 闭包跨 actor 传递 `Notification` 带来的竞态检查：
+
+```swift
+@MainActor
+func observeScroll(scrollView: NSScrollView) {
+    let contentView = scrollView.contentView
+    NotificationCenter.default.addObserver(
+        self,
+        selector: #selector(handleBoundsDidChange(_:)),
+        name: NSView.boundsDidChangeNotification,
+        object: contentView
+    )
+
+    contentView.postsBoundsChangedNotifications = true
+}
+
+@MainActor
+@objc private func handleBoundsDidChange(_ notification: Notification) {
+    guard let clipView = notification.object as? NSClipView else { return }
+    let newOffset = clipView.bounds.origin.y
+    if parent.scrollOffset != newOffset {
+        parent.scrollOffset = newOffset
+    }
+    parent.onVisibleContentChanged?()
+}
+```
+
 ## SwiftUI 中的注意事项
 
 SwiftUI View body 自动在主线程执行，但：
