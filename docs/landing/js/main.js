@@ -90,8 +90,7 @@
             if (!this.release || !this.release.assets) return null;
 
             return this.release.assets.find(asset =>
-                asset.name.endsWith('.dmg') &&
-                asset.content_type === 'application/octet-stream'
+                asset.name.endsWith('.dmg')
             );
         }
 
