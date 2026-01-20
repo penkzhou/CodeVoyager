@@ -130,6 +130,43 @@ dependencies: [
 | Large File Support | 10,000+ lines with smooth scrolling |
 | Commit History Loading | Virtualized list, load on demand |
 
+## 🚀 Release Process
+
+### Landing Page Deployment
+
+**Website**: https://penkzhou.github.io/CodeVoyager/
+
+| Trigger | Description |
+|---------|-------------|
+| Push to `main` branch | Only when files under `docs/landing/**` are changed |
+| Manual trigger | Via GitHub Actions `workflow_dispatch` |
+
+The landing page **dynamically fetches version and download links**:
+- Calls GitHub API on page load to get latest release info
+- Displays the latest version number (e.g., `v0.0.1`)
+- Download button links directly to the latest DMG file
+- Falls back to "Latest" with release page link if API fails (e.g., rate limiting)
+
+### Application Release
+
+| Trigger | Description |
+|---------|-------------|
+| Push tag matching `v*.*.*` | e.g., `v0.0.1`, `v1.2.3` |
+
+The release workflow automatically:
+1. Builds Universal Binary (arm64 + x86_64)
+2. Signs with Apple Developer ID
+3. Submits for Apple Notarization
+4. Creates DMG installer
+5. Creates GitHub Release with build artifacts
+
+**To release a new version**:
+```bash
+# Create and push tag
+git tag v0.1.0
+git push origin v0.1.0
+```
+
 ## 🗺️ Roadmap
 
 ### v0.1.0 (Current)

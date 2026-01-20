@@ -130,6 +130,43 @@ dependencies: [
 | 大文件支持 | 10,000+ 行流畅滚动 |
 | 提交历史加载 | 虚拟化列表，按需加载 |
 
+## 🚀 发布流程
+
+### Landing Page 发布
+
+**官网地址**: https://penkzhou.github.io/CodeVoyager/
+
+| 触发条件 | 说明 |
+|---------|------|
+| Push 到 `main` 分支 | 仅当 `docs/landing/**` 路径下的文件有变更时触发 |
+| 手动触发 | 通过 GitHub Actions 的 `workflow_dispatch` 手动运行 |
+
+Landing Page 上的**版本号和下载链接是动态获取的**：
+- 页面加载时会调用 GitHub API 获取最新 Release 信息
+- 自动显示最新版本号（如 `v0.0.1`）
+- 下载按钮直接链接到最新的 DMG 文件
+- 若 API 请求失败（如速率限制），会 fallback 显示 "Latest" 并链接到 Release 页面
+
+### 应用发布
+
+| 触发条件 | 说明 |
+|---------|------|
+| Push 符合 `v*.*.*` 格式的 Tag | 例如：`v0.0.1`、`v1.2.3` |
+
+发布流程自动执行以下步骤：
+1. 构建 Universal Binary（支持 arm64 和 x86_64）
+2. 使用 Apple Developer ID 签名
+3. 提交 Apple 公证（Notarization）
+4. 创建 DMG 安装包
+5. 生成 GitHub Release 并上传构建产物
+
+**发布新版本**：
+```bash
+# 创建并推送 tag
+git tag v0.1.0
+git push origin v0.1.0
+```
+
 ## 🗺️ 路线图
 
 ### v0.1.0 (当前)
