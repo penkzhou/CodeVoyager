@@ -283,15 +283,15 @@ final class LanguageConfigurationPerformanceTests: XCTestCase {
 
     private var registry: LanguageRegistry!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         registry = LanguageRegistry()
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         registry.clearCache()
         registry = nil
-        super.tearDown()
+        try await super.tearDown()
     }
 
     /// 测试语言配置首次加载性能（冷启动）

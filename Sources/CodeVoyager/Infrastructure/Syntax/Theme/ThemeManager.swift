@@ -48,7 +48,9 @@ public final class ThemeManager: ThemeManagerProtocol {
     private let themeChangeSubject = PassthroughSubject<SyntaxTheme, Never>()
 
     /// 系统外观变化监听器
-    private var appearanceObserver: Any?
+    /// - Note: 使用 nonisolated(unsafe) 因为 observer 只在 main actor 创建，
+    ///   deinit 也在同一线程调用，访问是安全的
+    private nonisolated(unsafe) var appearanceObserver: Any?
 
     // MARK: - UserDefaults Keys
 

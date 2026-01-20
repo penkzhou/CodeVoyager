@@ -56,7 +56,8 @@ struct SyntaxHighlightingServiceTests {
     // MARK: - Language Detection Tests
 
     /// 语言检测测试用例：(文件名, 期望的语言)
-    static let languageDetectionCases: [(filename: String, expected: SupportedLanguage?)] = [
+    /// - Note: 使用 nonisolated 因为数组只包含 Sendable 值类型，可安全地从 @Test 宏访问
+    nonisolated static let languageDetectionCases: [(filename: String, expected: SupportedLanguage?)] = [
         ("file.swift", .swift),
         ("file.js", .javascript),
         ("file.ts", .typescript),

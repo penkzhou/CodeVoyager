@@ -1,7 +1,10 @@
 import Foundation
 
 /// Protocol defining file system operations.
-protocol FileSystemServiceProtocol {
+///
+/// ## Thread Safety
+/// 此协议继承 `Sendable`，实现类必须确保线程安全。
+protocol FileSystemServiceProtocol: Sendable {
     // MARK: - Directory Operations
 
     /// Get the contents of a directory (files and subdirectories).
