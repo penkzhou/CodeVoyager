@@ -26,6 +26,8 @@ jobs:
   build-and-release:
     name: Build, Sign, Notarize, and Release
     runs-on: macos-15
+    permissions:
+      contents: write  # Required for creating GitHub releases
 
     steps:
       - name: Checkout code
