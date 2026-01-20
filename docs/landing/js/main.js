@@ -95,14 +95,15 @@
         }
 
         showFallback() {
-            const releasesUrl = `https://github.com/${CONFIG.github.owner}/${CONFIG.github.repo}/releases`;
+            // Link directly to latest release page (not releases list)
+            const latestReleaseUrl = `https://github.com/${CONFIG.github.owner}/${CONFIG.github.repo}/releases/latest`;
 
             this.versionElements.forEach(el => {
                 el.textContent = 'Latest';
             });
 
             this.downloadButtons.forEach(btn => {
-                btn.href = releasesUrl;
+                btn.href = latestReleaseUrl;
             });
         }
     }
