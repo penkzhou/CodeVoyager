@@ -4,21 +4,13 @@ import os.log
 
 // 导入各语言的 Tree-sitter 解析器
 import TreeSitterSwift
-import TreeSitterSwiftQueries
 import TreeSitterJavaScript
-import TreeSitterJavaScriptQueries
 import TreeSitterTypeScript
-import TreeSitterTypeScriptQueries
 import TreeSitterTSX
-import TreeSitterTSXQueries
 import TreeSitterPython
-import TreeSitterPythonQueries
 import TreeSitterJSON
-import TreeSitterJSONQueries
 import TreeSitterMarkdown
-import TreeSitterMarkdownQueries
 import TreeSitterMarkdownInline
-import TreeSitterMarkdownInlineQueries
 
 /// 语言配置加载错误
 public enum LanguageConfigurationError: Error, LocalizedError {
@@ -210,36 +202,59 @@ public struct SyntaxLanguageConfiguration {
         }
     }
 
+    private struct QueryResource {
+        let bundleName: String
+        let filename: String
+    }
+
     private static func highlightsQueryURLs(for language: SupportedLanguage) -> [URL] {
+        let resources: [QueryResource]
         switch language {
         case .swift:
-            return [TreeSitterSwiftQueries.Query.highlightsFileURL]
+            resources = [
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterSwiftQueries", filename: "highlights")
+            ]
         case .javascript:
-            return [
-                TreeSitterJavaScriptQueries.Query.highlightsFileURL,
-                TreeSitterJavaScriptQueries.Query.highlightsParamsFileURL,
-                TreeSitterJavaScriptQueries.Query.highlightsJSXFileURL
+            resources = [
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterJavaScriptQueries", filename: "highlights"),
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterJavaScriptQueries", filename: "highlights-params"),
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterJavaScriptQueries", filename: "highlights-jsx")
             ]
         case .typescript:
-            return [
-                TreeSitterJavaScriptQueries.Query.highlightsFileURL,
-                TreeSitterJavaScriptQueries.Query.highlightsParamsFileURL,
-                TreeSitterTypeScriptQueries.Query.highlightsFileURL
+            resources = [
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterJavaScriptQueries", filename: "highlights"),
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterJavaScriptQueries", filename: "highlights-params"),
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterTypeScriptQueries", filename: "highlights")
             ]
         case .tsx:
-            return [
-                TreeSitterJavaScriptQueries.Query.highlightsFileURL,
-                TreeSitterJavaScriptQueries.Query.highlightsParamsFileURL,
-                TreeSitterJavaScriptQueries.Query.highlightsJSXFileURL,
-                TreeSitterTSXQueries.Query.highlightsFileURL
+            resources = [
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterJavaScriptQueries", filename: "highlights"),
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterJavaScriptQueries", filename: "highlights-params"),
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterJavaScriptQueries", filename: "highlights-jsx"),
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterTSXQueries", filename: "highlights")
             ]
         case .python:
-            return [TreeSitterPythonQueries.Query.highlightsFileURL]
+            resources = [
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterPythonQueries", filename: "highlights")
+            ]
         case .json:
-            return [TreeSitterJSONQueries.Query.highlightsFileURL]
+            resources = [
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterJSONQueries", filename: "highlights")
+            ]
         case .markdown:
-            return [TreeSitterMarkdownQueries.Query.highlightsFileURL]
+            resources = [
+                QueryResource(bundleName: "TreeSitterLanguages_TreeSitterMarkdownQueries", filename: "highlights")
+            ]
         }
+
+        return resources.compactMap { queryFileURL(bundleName: $0.bundleName, filename: $0.filename) }
+    }
+
+    private static func queryFileURL(bundleName: String, filename: String) -> URL? {
+        let baseURL = Bundle.main.resourceURL ?? Bundle.main.bundleURL
+        return baseURL
+            .appendingPathComponent("\(bundleName).bundle")
+            .appendingPathComponent("\(filename).scm")
     }
 
     // MARK: - Internal Initialization
