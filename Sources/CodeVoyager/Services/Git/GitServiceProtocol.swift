@@ -2,7 +2,9 @@ import Foundation
 
 /// Protocol defining Git operations.
 /// Implementations may use SwiftGit3, git CLI, or a hybrid approach.
-protocol GitServiceProtocol {
+///
+/// Conforms to `Sendable` to allow safe use across actor boundaries.
+protocol GitServiceProtocol: Sendable {
     // MARK: - Repository
 
     /// Check if the given path is a valid Git repository.
@@ -33,6 +35,23 @@ protocol GitServiceProtocol {
     ///   - offset: Number of commits to skip
     /// - Returns: Array of commits
     func commits(
+        in repository: URL,
+        limit: Int,
+        offset: Int
+    ) async throws -> [Commit]
+
+    /// Get commit history for a specific file with pagination.
+    ///
+    /// Uses `git log --follow` to track file history across renames.
+    ///
+    /// - Parameters:
+    ///   - filePath: Relative path to the file within the repository
+    ///   - repository: Repository URL
+    ///   - limit: Maximum number of commits to fetch
+    ///   - offset: Number of commits to skip
+    /// - Returns: Array of commits that modified the specified file
+    func commits(
+        forFile filePath: String,
         in repository: URL,
         limit: Int,
         offset: Int

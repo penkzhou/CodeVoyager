@@ -1,6 +1,25 @@
 import SwiftUI
 import os.log
 
+/// Debug logging to file
+private func debugLog(_ message: String) {
+    let logFile = URL(fileURLWithPath: "/tmp/codevoyager_debug.log")
+    let timestamp = ISO8601DateFormatter().string(from: Date())
+    let line = "[\(timestamp)] [AppState] \(message)\n"
+    if let data = line.data(using: .utf8) {
+        if FileManager.default.fileExists(atPath: logFile.path) {
+            if let handle = try? FileHandle(forWritingTo: logFile) {
+                handle.seekToEndOfFile()
+                handle.write(data)
+                handle.closeFile()
+            }
+        } else {
+            try? data.write(to: logFile)
+        }
+    }
+    print("[AppState] \(message)")
+}
+
 /// Application-level state management.
 /// Handles global state like recent repositories and open repository panel.
 @MainActor
@@ -16,6 +35,7 @@ final class AppState {
     private let logger = Logger(subsystem: "com.codevoyager", category: "AppState")
 
     init() {
+        debugLog("AppState initialized")
         loadRecentRepositories()
     }
 
@@ -34,6 +54,7 @@ final class AppState {
 
     /// Open a repository at the given URL
     func openRepository(at url: URL) {
+        debugLog("Opening repository at: \(url.path)")
         logger.info("Opening repository at: \(url.path)")
 
         // Validate that the path exists
