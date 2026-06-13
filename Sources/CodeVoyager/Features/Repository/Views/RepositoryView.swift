@@ -1,11 +1,31 @@
 import SwiftUI
 
+/// Debug logging helper - writes to file for easier debugging
+private func debugLog(_ message: String) {
+    let logFile = URL(fileURLWithPath: "/tmp/codevoyager_debug.log")
+    let timestamp = ISO8601DateFormatter().string(from: Date())
+    let line = "[\(timestamp)] \(message)\n"
+    if let data = line.data(using: .utf8) {
+        if FileManager.default.fileExists(atPath: logFile.path) {
+            if let handle = try? FileHandle(forWritingTo: logFile) {
+                handle.seekToEndOfFile()
+                handle.write(data)
+                handle.closeFile()
+            }
+        } else {
+            try? data.write(to: logFile)
+        }
+    }
+    print(message)
+}
+
 /// Main view for an opened repository.
 /// Uses NavigationSplitView for three-column layout.
 struct RepositoryView: View {
     let repository: Repository
     @State private var viewModel: RepositoryViewModel
     @State private var fileTreeViewModel: FileTreeViewModel
+    @State private var gitHistoryViewModel: GitHistoryViewModel
 
     @State private var columnVisibility = NavigationSplitViewVisibility.all
 
@@ -13,6 +33,7 @@ struct RepositoryView: View {
         self.repository = repository
         self._viewModel = State(initialValue: RepositoryViewModel(repository: repository))
         self._fileTreeViewModel = State(initialValue: FileTreeViewModel(repository: repository))
+        self._gitHistoryViewModel = State(initialValue: GitHistoryViewModel(repository: repository))
     }
 
     var body: some View {
@@ -21,6 +42,14 @@ struct RepositoryView: View {
             FileTreeView(viewModel: fileTreeViewModel) { fileNode in
                 Task {
                     await viewModel.openFile(fileNode)
+                    // Update Git history to show commits for the selected file
+                    let repoPath = repository.url.path
+                    let filePath = fileNode.path
+                    // Calculate relative path by removing repository root prefix
+                    let relativePath = filePath.hasPrefix(repoPath)
+                        ? String(filePath.dropFirst(repoPath.count)).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                        : filePath
+                    await gitHistoryViewModel.setSelectedFile(relativePath)
                 }
             }
             .navigationSplitViewColumnWidth(min: 200, ideal: 250, max: 400)
@@ -30,7 +59,7 @@ struct RepositoryView: View {
                 .navigationSplitViewColumnWidth(min: 400, ideal: 600)
         } detail: {
             // Detail: Git history
-            GitHistoryPlaceholder()
+            GitHistoryView(viewModel: gitHistoryViewModel)
                 .navigationSplitViewColumnWidth(min: 300, ideal: 350, max: 500)
         }
         .navigationTitle(repository.name)
@@ -47,7 +76,11 @@ struct RepositoryView: View {
             }
         }
         .task {
+            debugLog("[RepositoryView] Task started for: \(repository.url.path)")
+            // Load file tree and git history
             await viewModel.load()
+            await gitHistoryViewModel.loadInitialData()
+            debugLog("[RepositoryView] Task completed")
         }
     }
 }
@@ -70,13 +103,6 @@ struct PlaceholderView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-/// Placeholder for Git History (to be implemented in Phase 3).
-struct GitHistoryPlaceholder: View {
-    var body: some View {
-        PlaceholderView(icon: "clock.arrow.circlepath", title: "Git History", subtitle: "Coming in Phase 3")
     }
 }
 

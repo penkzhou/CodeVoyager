@@ -5,20 +5,19 @@ CONF=${1:-release}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
-# Load version.env first to pick up APP_NAME, BUNDLE_ID, etc.
-if [[ -f "$ROOT/version.env" ]]; then
-  source "$ROOT/version.env"
-fi
-
-# Set defaults for any unset variables
 APP_NAME=${APP_NAME:-MyApp}
 BUNDLE_ID=${BUNDLE_ID:-com.example.myapp}
 MACOS_MIN_VERSION=${MACOS_MIN_VERSION:-14.0}
 MENU_BAR_APP=${MENU_BAR_APP:-0}
 SIGNING_MODE=${SIGNING_MODE:-}
 APP_IDENTITY=${APP_IDENTITY:-}
-MARKETING_VERSION=${MARKETING_VERSION:-0.1.0}
-BUILD_NUMBER=${BUILD_NUMBER:-1}
+
+if [[ -f "$ROOT/version.env" ]]; then
+  source "$ROOT/version.env"
+else
+  MARKETING_VERSION=${MARKETING_VERSION:-0.1.0}
+  BUILD_NUMBER=${BUILD_NUMBER:-1}
+fi
 
 ARCH_LIST=( ${ARCHES:-} )
 if [[ ${#ARCH_LIST[@]} -eq 0 ]]; then
