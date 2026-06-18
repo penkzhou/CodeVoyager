@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         // Database for caching Git metadata
-        .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.11.0"),
+        .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.11.1"),
 
         // Syntax Highlighting - Core
         .package(url: "https://github.com/krzyzanowskim/STTextView.git", from: "2.3.10"),
